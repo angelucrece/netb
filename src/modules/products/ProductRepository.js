@@ -1,474 +1,141 @@
-
-//const db = require('../../config/database');
-
-// class ProductRepository {
-
-//   static async findAll(whereClause, params) {
-//     const query = `
-//       SELECT 
-//         p.*, c.name as category_name,
-//         (p.quantity <= p.threshold) as low_stock
-//       FROM products p
-//       LEFT JOIN categories c ON p.category_id = c.id
-//       ${whereClause}
-//       ORDER BY p.name
-//       LIMIT $${params.length - 1} OFFSET $${params.length}
-//     `;
-//     return db.query(query, params);
-//   }
-
-//   static async count(whereClause, params) {
-//     return db.query(`SELECT COUNT(*) FROM products p ${whereClause}`, params);
-//   }
-
-//   static async findById(id) {
-//     return db.query(
-//       `SELECT * FROM products WHERE id = $1 AND active = true`,
-//       [id]
-//     );
-//   }
-
-//   static async findByBarcode(barcode) {
-//     return db.query(
-//       `SELECT * FROM products WHERE barcode = $1 AND active = true`,
-//       [barcode]
-//     );
-//   }
-
-//   static async create(client, name, barcode, price, quantity, threshold, category_id, description) {
-//     const query = `
-//       INSERT INTO products (name, barcode, price, quantity, threshold, category_id, description, active)
-//       VALUES ($1,$2,$3,$4,$5,$6,$7,true)
-//       RETURNING id, name, barcode, price, quantity, threshold, category_id, description,active, created_at`
-//       ;
-//     return client.query(query, [name, barcode, price, quantity, threshold, category_id, description])
-//   }
-
-//   static async update(client, id, name, barcode, price, quantity, threshold, category_id, description) {
-//     const query = `
-//       UPDATE products
-//       SET name=$1, barcode=$2, price=$3, quantity=$4, threshold=$5,
-//           category_id=$6, description=$7, updated_at=NOW()
-//       WHERE id=$8
-//       RETURNING name,barcode,price,quantity,threshold ,category_id ,description, id`
-//       ;
-//     return client.query(query, [name, barcode, price, quantity, threshold, category_id, description,id])
-    
-//   }
-
-//   static async softDelete(client, id) {
-//     return client.query(
-//       `UPDATE products SET active=false WHERE id=$1`,
-//       [id]
-//     );
-//   }
-
-
-//   //recherche
-
-//   static async search(filters) {
-//     let query = `
-//       SELECT 
-//         p.*, 
-//         c.name as category_name,
-//         (p.quantity <= p.threshold) as low_stock
-//       FROM products p
-//       LEFT JOIN categories c ON p.category_id = c.id
-//       WHERE p.active = true
-//     `;
-    
-//     const params = [];
-//     let paramIndex = 1;
-    
-//     // Recherche par terme (nom ou code-barres)
-//     if (filters.search) {
-//       query += ` AND (p.name ILIKE $${paramIndex} OR p.barcode ILIKE $${paramIndex})`;
-//       params.push(`%${filters.search}%`);
-//       paramIndex++;
-//     }
-    
-//     // Filtre par catégorie
-//     if (filters.category_id) {
-//       query += ` AND p.category_id = $${paramIndex}`;
-//       params.push(filters.category_id);
-//       paramIndex++;
-//     }
-    
-//     // Filtre par site (via la catégorie)
-//     if (filters.site_id) {
-//       query += ` AND c.site_id = $${paramIndex}`;
-//       params.push(filters.site_id);
-//       paramIndex++;
-//     }
-    
-//     // Filtre low stock
-//     if (filters.lowStock === 'true') {
-//       query += ` AND p.quantity <= p.threshold`;
-//     }
-    
-//     // Prix minimum
-//     if (filters.minPrice) {
-//       query += ` AND p.price >= $${paramIndex}`;
-//       params.push(parseFloat(filters.minPrice));
-//       paramIndex++;
-//     }
-    
-//     // Prix maximum
-//     if (filters.maxPrice) {
-//       query += ` AND p.price <= $${paramIndex}`;
-//       params.push(parseFloat(filters.maxPrice));
-//       paramIndex++;
-//     }
-    
-//     // Quantité minimum
-//     if (filters.minQuantity) {
-//       query += ` AND p.quantity >= $${paramIndex}`;
-//       params.push(parseInt(filters.minQuantity));
-//       paramIndex++;
-//     }
-    
-//     // Tri
-//     const sortBy = filters.sortBy || 'name';
-//     const sortOrder = filters.sortOrder === 'desc' ? 'DESC' : 'ASC';
-//     query += ` ORDER BY p.${sortBy} ${sortOrder}`;
-    
-//     // Pagination
-//     const page = parseInt(filters.page || 1);
-//     const limit = parseInt(filters.limit || 20);
-//     const offset = (page - 1) * limit;
-    
-//     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-//     params.push(limit, offset);
-    
-//     return db.query(query, params);
-//   }
-
-//   static async countSearch(filters) {
-//     let query = `
-//       SELECT COUNT(*) 
-//       FROM products p
-//       LEFT JOIN categories c ON p.category_id = c.id
-//       WHERE p.active = true
-//     `;
-    
-//     const params = [];
-//     let paramIndex = 1;
-    
-//     if (filters.search) {
-//       query += ` AND (p.name ILIKE $${paramIndex} OR p.barcode ILIKE $${paramIndex})`;
-//       params.push(`%${filters.search}%`);
-//       paramIndex++;
-//     }
-    
-//     if (filters.category_id) {
-//       query += ` AND p.category_id = $${paramIndex}`;
-//       params.push(filters.category_id);
-//       paramIndex++;
-//     }
-    
-//     if (filters.site_id) {
-//       query += ` AND c.site_id = $${paramIndex}`;
-//       params.push(filters.site_id);
-//       paramIndex++;
-//     }
-    
-//     if (filters.lowStock === 'true') {
-//       query += ` AND p.quantity <= p.threshold`;
-//     }
-    
-//     if (filters.minPrice) {
-//       query += ` AND p.price >= $${paramIndex}`;
-//       params.push(parseFloat(filters.minPrice));
-//       paramIndex++;
-//     }
-    
-//     if (filters.maxPrice) {
-//       query += ` AND p.price <= $${paramIndex}`;
-//       params.push(parseFloat(filters.maxPrice));
-//       paramIndex++;
-//     }
-    
-//     if (filters.minQuantity) {
-//       query += ` AND p.quantity >= $${paramIndex}`;
-//       params.push(parseInt(filters.minQuantity));
-//       paramIndex++;
-//     }
-    
-//     return db.query(query, params);
-//   }
-
-//     // Recherche par nom (partiel)
-//   static async findByName(name) {
-//     return db.query(
-//       `SELECT * FROM products WHERE name ILIKE $1 AND active = true LIMIT 50`,
-//       [`%${name}%`]
-//     );
-//   }
-// }
-// 
-
-
 const db = require('../../config/database');
-const Product = require('./ProductModel'); // Import du modèle Product
+
+const SELECT_PRODUCT = `
+  SELECT p.*,
+         c.name AS category_name,
+         COALESCE(SUM(ps.quantity), 0)::int AS total_stock
+  FROM products p
+  LEFT JOIN categories c ON c.id = p.category_id
+  LEFT JOIN product_stocks ps ON ps.product_id = p.id
+`;
 
 class ProductRepository {
 
-  static async findAll(whereClause, params) {
-    const query = `
-      SELECT 
-        p.*, 
-        c.name as category_name,
-        ( p.threshold) as low_stock,
-        ROUND(((p.selling_price - p.purchase_price) / NULLIF(p.purchase_price, 0) * 100), 2) as margin_percentage
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ${whereClause}
-      ORDER BY p.name
-      LIMIT $${params.length - 1} OFFSET $${params.length}
-    `;
-    const result = await db.query(query, params);
-    // Convertir chaque ligne en objet Product
-    return result.rows.map(row => new Product(row));
+  static async findAll({ search, category_id, site_id, alert, limit, offset }) {
+    const conds = ['p.active = true'];
+    const vals  = [];
+    let i = 1;
+
+    if (search)      { conds.push(`(p.name ILIKE $${i} OR p.sku ILIKE $${i} OR p.barcode ILIKE $${i})`); vals.push(`%${search}%`); i++; }
+    if (category_id) { conds.push(`p.category_id = $${i}`); vals.push(category_id); i++; }
+    if (site_id)     { conds.push(`ps.site_id = $${i}`); vals.push(site_id); i++; }
+    if (alert === 'true') { conds.push(`ps.quantity <= ps.min_stock`); }
+
+    const where = `WHERE ${conds.join(' AND ')}`;
+    const { rows } = await db.query(
+      `${SELECT_PRODUCT} ${where}
+       GROUP BY p.id, c.name
+       ORDER BY p.name
+       LIMIT $${i} OFFSET $${i+1}`,
+      [...vals, limit, offset]
+    );
+    return rows;
+  }
+
+  static async count({ search, category_id, site_id, alert }) {
+    const conds = ['p.active = true'];
+    const vals  = [];
+    let i = 1;
+    if (search)      { conds.push(`(p.name ILIKE $${i} OR p.sku ILIKE $${i} OR p.barcode ILIKE $${i})`); vals.push(`%${search}%`); i++; }
+    if (category_id) { conds.push(`p.category_id = $${i}`); vals.push(category_id); i++; }
+    if (site_id)     { conds.push(`ps.site_id = $${i}`); vals.push(site_id); i++; }
+    if (alert === 'true') { conds.push(`ps.quantity <= ps.min_stock`); }
+    const { rows } = await db.query(
+      `SELECT COUNT(DISTINCT p.id) FROM products p
+       LEFT JOIN product_stocks ps ON ps.product_id = p.id
+       WHERE ${conds.join(' AND ')}`, vals
+    );
+    return parseInt(rows[0].count);
   }
 
   static async findById(id) {
-    const result = await db.query(
-      `SELECT 
-        p.*, 
-        c.name as category_name,
-        ( p.threshold) as low_stock,
-        ROUND(((p.selling_price - p.purchase_price) / NULLIF(p.purchase_price, 0) * 100), 2) as margin_percentage
-       FROM products p
-       LEFT JOIN categories c ON p.category_id = c.id
-       WHERE p.id = $1 AND p.active = true`,
+    const { rows } = await db.query(
+      `${SELECT_PRODUCT}
+       LEFT JOIN product_variants pv ON pv.product_id = p.id
+       WHERE p.id = $1 AND p.active = true
+       GROUP BY p.id, c.name`,
       [id]
     );
-    return result.rows.length ? new Product(result.rows[0]) : null;
+    if (!rows[0]) return null;
+    // Charger variantes et stocks par site séparément
+    const [variants, stocks] = await Promise.all([
+      db.query(`SELECT * FROM product_variants WHERE product_id=$1`, [id]),
+      db.query(
+        `SELECT ps.*, s.name AS site_name FROM product_stocks ps
+         JOIN sites s ON s.id = ps.site_id WHERE ps.product_id=$1`, [id]
+      ),
+    ]);
+    return { ...rows[0], variants: variants.rows, stocks: stocks.rows };
   }
 
   static async findByBarcode(barcode) {
-    const result = await db.query(
-      `SELECT * FROM products WHERE barcode = $1 AND active = true`,
-      [barcode]
+    const { rows } = await db.query(
+      `${SELECT_PRODUCT} WHERE p.barcode=$1 AND p.active=true GROUP BY p.id, c.name`, [barcode]
     );
-    return result.rows.length ? new Product(result.rows[0]) : null;
+    return rows[0] || null;
   }
 
-  static async create(client, name, barcode, selling_price, purchase_price, threshold, category_id, description, photo) {
-    const query = `
-      INSERT INTO products (
-        name, barcode, selling_price, purchase_price, 
-         threshold, category_id, description, photo, active
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8,  true)
-      RETURNING id, name, barcode, selling_price, purchase_price, 
-                 threshold, category_id, description, photo, 
-                active, created_at
-    `;
-    const result = await client.query(query, [name, barcode, selling_price, purchase_price,  threshold, category_id, description, photo]);
-    return new Product(result.rows[0]);
+  static async findBySku(sku) {
+    const { rows } = await db.query('SELECT id FROM products WHERE sku=$1', [sku]);
+    return rows[0] || null;
   }
 
-  static async update(client, id, name, barcode, selling_price, purchase_price,  threshold, category_id, description, photo) {
-    const query = `
-      UPDATE products
-      SET name = $1, 
-          barcode = $2, 
-          selling_price = $3, 
-          purchase_price = $4, 
-          threshold = $5,
-          category_id = $6, 
-          description = $7,
-          photo = $8,
-          updated_at = NOW()
-      WHERE id = $9
-      RETURNING id, name, barcode, selling_price, purchase_price, 
-                 threshold, category_id, description, photo, 
-                updated_at, created_at
-    `;
-    const result = await client.query(query, [name, barcode, selling_price, purchase_price,  threshold, category_id, description, photo, id]);
-    return new Product(result.rows[0]);
-  }
-
-  static async softDelete(client, id) {
-    return client.query(
-      `UPDATE products SET active = false WHERE id = $1 RETURNING id`,
-      [id]
+  static async findAlerts(site_id) {
+    const cond = site_id ? 'AND ps.site_id = $1' : '';
+    const vals = site_id ? [site_id] : [];
+    const { rows } = await db.query(
+      `SELECT p.id, p.name, p.sku, ps.quantity, ps.min_stock, s.name AS site_name
+       FROM product_stocks ps
+       JOIN products p ON p.id = ps.product_id
+       JOIN sites s ON s.id = ps.site_id
+       WHERE ps.quantity <= ps.min_stock AND p.active=true ${cond}
+       ORDER BY ps.quantity ASC`, vals
     );
+    return rows;
   }
 
-  // Méthode pour la recherche avancée
-  static async search(filters) {
-    let query = `
-      SELECT 
-        p.*, 
-        c.name as category_name,
-        (p.threshold) as low_stock,
-        ROUND(((p.selling_price - p.purchase_price) / NULLIF(p.purchase_price, 0) * 100), 2) as margin_percentage
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.active = true
-    `;
-    
-    const params = [];
-    let paramIndex = 1;
-    
-    if (filters.search) {
-      query += ` AND (p.name ILIKE $${paramIndex} OR p.barcode ILIKE $${paramIndex})`;
-      params.push(`%${filters.search}%`);
-      paramIndex++;
-    }
-    
-    if (filters.category_id) {
-      query += ` AND p.category_id = $${paramIndex}`;
-      params.push(filters.category_id);
-      paramIndex++;
-    }
-    
-    if (filters.site_id) {
-      query += ` AND c.site_id = $${paramIndex}`;
-      params.push(filters.site_id);
-      paramIndex++;
-    }
-    
-    if (filters.minMargin) {
-      query += ` AND ((p.selling_price - p.purchase_price) / NULLIF(p.purchase_price, 0) * 100) >= $${paramIndex}`;
-      params.push(parseFloat(filters.minMargin));
-      paramIndex++;
-    }
-    
-    if (filters.maxMargin) {
-      query += ` AND ((p.selling_price - p.purchase_price) / NULLIF(p.purchase_price, 0) * 100) <= $${paramIndex}`;
-      params.push(parseFloat(filters.maxMargin));
-      paramIndex++;
-    }
-    
-    if (filters.minSellingPrice) {
-      query += ` AND p.selling_price >= $${paramIndex}`;
-      params.push(parseFloat(filters.minSellingPrice));
-      paramIndex++;
-    }
-    
-    if (filters.maxSellingPrice) {
-      query += ` AND p.selling_price <= $${paramIndex}`;
-      params.push(parseFloat(filters.maxSellingPrice));
-      paramIndex++;
-    }
-    
-    if (filters.minPurchasePrice) {
-      query += ` AND p.purchase_price >= $${paramIndex}`;
-      params.push(parseFloat(filters.minPurchasePrice));
-      paramIndex++;
-    }
-    
-    if (filters.maxPurchasePrice) {
-      query += ` AND p.purchase_price <= $${paramIndex}`;
-      params.push(parseFloat(filters.maxPurchasePrice));
-      paramIndex++;
-    }
-    
-    if (filters.hasPhoto === 'true') {
-      query += ` AND p.photo IS NOT NULL AND p.photo != ''`;
-    }
-    
-    if (filters.noPhoto === 'true') {
-      query += ` AND (p.photo IS NULL OR p.photo = '')`;
-    }
-    
-    if (filters.lowStock === 'true') {
-      query += ` AND  p.threshold`;
-    }
-    
-    // if (filters.minQuantity) {
-    //   query += ` AND p.quantity >= $${paramIndex}`;
-    //   params.push(parseInt(filters.minQuantity));
-    //   paramIndex++;
-    // }
-    
-    
-    
-    // Tri multi-colonnes
-    if (filters.sort) {
-      const sortFields = filters.sort.split(',').map(field => {
-        const [fieldName, order = 'asc'] = field.split(':');
-        const allowedFields = ['name', 'selling_price', 'purchase_price',  'threshold', 'created_at', 'barcode', 'category_name', 'margin_percentage'];
-        if (allowedFields.includes(fieldName)) {
-          let columnName = fieldName;
-          if (fieldName === 'category_name') columnName = 'c.name';
-          if (fieldName === 'selling_price') columnName = 'p.selling_price';
-          if (fieldName === 'purchase_price') columnName = 'p.purchase_price';
-          if (fieldName === 'threshold') columnName = 'p.threshold';
-          if (fieldName === 'name') columnName = 'p.name';
-          if (fieldName === 'barcode') columnName = 'p.barcode';
-          if (fieldName === 'created_at') columnName = 'p.created_at';
-          if (fieldName === 'margin_percentage') columnName = 'margin_percentage';
-          return `${columnName} ${order.toUpperCase()}`;
-        }
-        return null;
-      }).filter(f => f !== null);
-      
-      if (sortFields.length > 0) {
-        query += ` ORDER BY ${sortFields.join(', ')}`;
-      } else {
-        query += ` ORDER BY p.name ASC`;
-      }
-    } else {
-      query += ` ORDER BY p.name ASC`;
-    }
-    
-    // Pagination
-    const page = parseInt(filters.page || 1);
-    const limit = parseInt(filters.limit || 20);
-    const offset = (page - 1) * limit;
-    
-    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(limit, offset);
-    
-    const result = await db.query(query, params);
-    return {
-      rows: result.rows.map(row => new Product(row)),
-      total: result.rows.length
-    };
+  static async create({ sku, barcode, name, brand, unit, description, category_id,
+                        purchase_price, sale_price, photo_url, qr_code_url }) {
+    const { rows } = await db.query(
+      `INSERT INTO products (sku, barcode, name, brand, unit, description, category_id,
+                             purchase_price, sale_price, photo_url, qr_code_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+      [sku, barcode||null, name, brand||null, unit||'piece', description||null,
+       category_id||null, purchase_price||0, sale_price||0, photo_url||null, qr_code_url||null]
+    );
+    return this.findById(rows[0].id);
   }
 
-  static async countSearch(filters) {
-    let query = `
-      SELECT COUNT(*) as total
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.active = true
-    `;
-    
-    const params = [];
-    let paramIndex = 1;
-    
-    if (filters.search) {
-      query += ` AND (p.name ILIKE $${paramIndex} OR p.barcode ILIKE $${paramIndex})`;
-      params.push(`%${filters.search}%`);
-      paramIndex++;
-    }
-    
-    if (filters.category_id) {
-      query += ` AND p.category_id = $${paramIndex}`;
-      params.push(filters.category_id);
-      paramIndex++;
-    }
-    
-    if (filters.site_id) {
-      query += ` AND c.site_id = $${paramIndex}`;
-      params.push(filters.site_id);
-      paramIndex++;
-    }
-    
-    const result = await db.query(query, params);
-    return parseInt(result.rows[0].total);
+  static async update(id, { name, brand, unit, description, category_id,
+                             purchase_price, sale_price, barcode }) {
+    await db.query(
+      `UPDATE products SET name=$1, brand=$2, unit=$3, description=$4, category_id=$5,
+                           purchase_price=$6, sale_price=$7, barcode=$8, updated_at=NOW()
+       WHERE id=$9`,
+      [name, brand||null, unit||'piece', description||null, category_id||null,
+       purchase_price||0, sale_price||0, barcode||null, id]
+    );
+    return this.findById(id);
   }
 
-  // ✅ Méthode COUNT 
-  static async count(whereClause, params) {
-    const query = `SELECT COUNT(*) FROM products p ${whereClause}`;
-    const result = await db.query(query, params);
-    return result;
+  static async updatePhoto(id, photo_url) {
+    await db.query(`UPDATE products SET photo_url=$1, updated_at=NOW() WHERE id=$2`, [photo_url, id]);
+    return this.findById(id);
+  }
+
+  static async upsertVariants(product_id, variants) {
+    await db.query(`DELETE FROM product_variants WHERE product_id=$1`, [product_id]);
+    for (const v of variants) {
+      await db.query(
+        `INSERT INTO product_variants (product_id, variant_type, variant_value, sku_suffix)
+         VALUES ($1,$2,$3,$4)`,
+        [product_id, v.type, v.value, v.sku_suffix||null]
+      );
+    }
+  }
+
+  static async softDelete(id) {
+    await db.query(`UPDATE products SET active=false, updated_at=NOW() WHERE id=$1`, [id]);
   }
 }
 
