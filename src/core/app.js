@@ -51,6 +51,7 @@ app.use('/api/v1/inventory',      require('../modules/inventory/InventoryRoute')
 app.use('/api/v1/documents',      require('../modules/stockDocuments/StockDocumentRoute'));
 app.use('/api/v1/reports',        require('../modules/reports/ReportRoute'));
 app.use('/api/v1/notifications',  require('../modules/notifications/NotificationRoute'));
+app.use('/api/v1/audit-logs',     require('../modules/auditLogs/AuditLogRoute'));
 
 // ── 404 ────────────────────────────────────────────────────
 app.use((req, res, next) => {
