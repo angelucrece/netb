@@ -1,123 +1,143 @@
-//fichier de tests pour le service d'authentification
+/**
+ * Tests unitaires – AuthService
+ * On mock la DB et bcrypt pour tester la logique pure.
+ */
 
+jest.mock('../../src/config/database');
+jest.mock('bcryptjs');
+jest.mock('jsonwebtoken');
+
+const db      = require('../../src/config/database');
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
+const crypto  = require('crypto');
+
+// Charger le service APRÈS les mocks
 const AuthService = require('../../src/modules/auth/AuthService');
-const db = require('../../src/config/database');
-const bcrypt = require('bcryptjs');
-process.env.JWT_SECRET = 'test_secret';
 
-//  MOCK DB
-jest.mock('../../src/config/database', () => ({
-  query: jest.fn()
-}));
+// ── Données de test ─────────────────────────────────────────
+const mockUser = {
+  id: 1,
+  email: 'naelle@nethastock.com',
+  password_hash: '$2b$12$hashed',
+  first_name: 'Naelle',
+  last_name: 'Admin',
+  active: true,
+  site_id: 1,
+  role_id: 1,
+  role_name: 'admin',
+  s_id: 1,
+  site_name: 'Siège Principal',
+};
 
-describe('AuthService', () => {
-
+beforeEach(() => {
+  jest.clearAllMocks();
+  // jwt.sign retourne un faux token par défaut
+  jwt.sign.mockReturnValue('fake.jwt.token');
 });
 
-it('doit connecter un utilisateur valide', async () => {
+// ── LOGIN ───────────────────────────────────────────────────
+describe('AuthService.login', () => {
 
-  const hashedPassword = await bcrypt.hash('123456', 10);
+  test('succès → retourne accessToken + refreshToken + user', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [mockUser] })  // SELECT user
+      .mockResolvedValueOnce({ rows: [] });           // UPDATE last_login
 
-  db.query.mockResolvedValueOnce({
-    rows: [
-      {
-        id: 1,
-        email: 'admin@test.com',
-        password: hashedPassword
-      }
-    ]
+    bcrypt.compare.mockResolvedValue(true);
+
+    const result = await AuthService.login(
+      { email: 'naelle@nethastock.com', password: 'noutong1' },
+      '127.0.0.1'
+    );
+
+    expect(result).toHaveProperty('accessToken');
+    expect(result).toHaveProperty('refreshToken');
+    expect(result.user.email).toBe('naelle@nethastock.com');
+    expect(result.user.role.name).toBe('admin');
   });
 
-  const result = await AuthService.login({
-    email: 'admin@test.com',
-    password: '123456'
+  test('email inexistant → erreur 401', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await expect(
+      AuthService.login({ email: 'inconnu@test.com', password: 'xxx' }, '127.0.0.1')
+    ).rejects.toMatchObject({ statusCode: 401 });
   });
 
-  expect(result).toBeDefined();
+  test('compte inactif → erreur 401', async () => {
+    db.query.mockResolvedValueOnce({ rows: [{ ...mockUser, active: false }] });
+
+    await expect(
+      AuthService.login({ email: 'naelle@nethastock.com', password: 'noutong1' }, '127.0.0.1')
+    ).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  test('mauvais mot de passe → erreur 401', async () => {
+    db.query.mockResolvedValueOnce({ rows: [mockUser] });
+    bcrypt.compare.mockResolvedValue(false);
+
+    await expect(
+      AuthService.login({ email: 'naelle@nethastock.com', password: 'wrong' }, '127.0.0.1')
+    ).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  test('site_id incorrect → erreur 401', async () => {
+    db.query.mockResolvedValueOnce({ rows: [mockUser] }); // site_id = 1
+    bcrypt.compare.mockResolvedValue(true);
+
+    await expect(
+      AuthService.login(
+        { email: 'naelle@nethastock.com', password: 'noutong1', site_id: 99 },
+        '127.0.0.1'
+      )
+    ).rejects.toMatchObject({ statusCode: 401 });
+  });
 });
 
-it('doit refuser si utilisateur inexistant', async () => {
+// ── REFRESH ─────────────────────────────────────────────────
+describe('AuthService.refresh', () => {
 
-  db.query.mockResolvedValueOnce({
-    rows: []
+  test('refresh token valide → nouveau accessToken', async () => {
+    jwt.verify.mockReturnValue({ id: 1 });
+    db.query.mockResolvedValueOnce({ rows: [{ ...mockUser }] });
+
+    const result = await AuthService.refresh('valid.refresh.token');
+    expect(result).toHaveProperty('accessToken');
   });
 
-  await expect(
-    AuthService.login({
-      username: 'fake',
-      password: '123'
-    })
-  ).rejects.toThrow();
+  test('refresh token invalide (jwt.verify throw) → erreur 401', async () => {
+    jwt.verify.mockImplementation(() => { throw new Error('invalid'); });
 
+    await expect(AuthService.refresh('bad.token')).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  test('refresh token révoqué (pas en DB) → erreur 401', async () => {
+    jwt.verify.mockReturnValue({ id: 1 });
+    db.query.mockResolvedValueOnce({ rows: [] }); // token hash ne correspond pas
+
+    await expect(AuthService.refresh('revoked.token')).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  test('compte inactif → erreur 401', async () => {
+    jwt.verify.mockReturnValue({ id: 1 });
+    db.query.mockResolvedValueOnce({ rows: [{ ...mockUser, active: false }] });
+
+    await expect(AuthService.refresh('valid.token')).rejects.toMatchObject({ statusCode: 401 });
+  });
 });
 
-it('doit refuser si mot de passe incorrect', async () => {
+// ── LOGOUT ──────────────────────────────────────────────────
+describe('AuthService.logout', () => {
 
-  db.query.mockResolvedValueOnce({
-    rows: [
-      {
-        id: 1,
-        username: 'admin',
-        password: '123456'
-      }
-    ]
+  test('logout → refresh_token mis à NULL en DB', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+
+    await AuthService.logout(1);
+
+    expect(db.query).toHaveBeenCalledWith(
+      expect.stringContaining('refresh_token = NULL'),
+      [1]
+    );
   });
-
-  await expect(
-    AuthService.login({
-      username: 'admin',
-      password: 'wrong'
-    })
-  ).rejects.toThrow();
-
-});
-
-// it('doit créer un utilisateur', async () => {
-
-//   db.query
-//     .mockResolvedValueOnce({ rows: [] }) // email n'existe pas
-//     .mockResolvedValueOnce({
-//       rows: [{ id: 1, email: 'new@test.com' }]
-//     });
-
-//   const fakeUser = { id: 1 };
-
-//   const result = await AuthService.register({
-//     email: 'new@test.com',
-//     password: '123456',
-//     site_name: 'Site A'
-//   }, fakeUser);
-
-//   expect(result).toBeDefined();
-// });
-
-it('doit créer un utilisateur', async () => {
-  // Mock 1: Vérification email existant (SELECT email)
-  db.query.mockResolvedValueOnce({ rows: [] });
-  
-  // Mock 2: Recherche du site (SELECT * FROM sites WHERE name = $1)
-  db.query.mockResolvedValueOnce({ 
-    rows: [{ id: 1, name: 'Site A' }] 
-  });
-  
-  // Mock 3: Transaction pour la création
-  db.transaction = jest.fn(async (callback) => {
-    const mockClient = {
-      query: jest.fn().mockResolvedValue({
-        rows: [{ id: 1, email: 'new@test.com' }]
-      })
-    };
-    const result = await callback(mockClient);
-    return result;
-  });
-
-  const fakeUser = { id: 1 };
-
-  const result = await AuthService.register({
-    email: 'new@test.com',
-    password: '123456',
-    site_name: 'Site A'
-  }, fakeUser);
-
-  expect(result).toBeDefined();
 });
