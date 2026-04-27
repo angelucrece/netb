@@ -1,42 +1,54 @@
-//fichier de tests pour le service de gestion des sites
-
-const SiteService = require('../../src/modules/sites/siteService');
+jest.mock('../../src/config/database');
 const db = require('../../src/config/database');
+const SiteService = require('../../src/modules/sites/SiteService');
 
-// Mock de la base de données
-jest.mock('../../src/config/database', () => ({
-  query: jest.fn()
-}));
+const mockSite = {
+  id: 1, name: 'Siège Principal', type: 'entrepot',
+  city: 'Yaoundé', active: true,
+  product_count: '0', total_stock: '0',
+};
 
-describe('SiteService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+beforeEach(() => jest.clearAllMocks());
+
+describe('SiteService.getSiteById', () => {
+  test('site existant → retourne le site', async () => {
+    db.query.mockResolvedValueOnce({ rows: [mockSite] });
+    const site = await SiteService.getSiteById(1);
+    expect(site.name).toBe('Siège Principal');
   });
 
-  it('doit créer un site', async () => {
-    // Mock de l'insertion du site
-    db.query.mockResolvedValue({
-      rows: [{ id: 1, name: 'Site A' }]
-    });
+  test('site inexistant → erreur 404', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    await expect(SiteService.getSiteById(99)).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
 
-    const result = await SiteService.createSite({ name: 'Site A' });
+describe('SiteService.deleteSite', () => {
+  test('site avec stock → erreur 409', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [mockSite] })  // findById
+      .mockResolvedValueOnce({ rows: [{ 1: 1 }] }); // hasStock → true
 
-    expect(result).toBeDefined();
-    expect(result.name).toBe('Site A');
+    await expect(SiteService.deleteSite(1)).rejects.toMatchObject({ statusCode: 409 });
   });
 
-  it('doit récupérer tous les sites', async () => {
-    // Mock de la récupération des sites
-    db.query.mockResolvedValue({
-      rows: [
-        { id: 1, name: 'Site A' },
-        { id: 2, name: 'Site B' }
-      ]
-    });
+  test('site sans stock → suppression OK', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [mockSite] })  // findById
+      .mockResolvedValueOnce({ rows: [] })           // hasStock → false
+      .mockResolvedValueOnce({ rows: [] });           // softDelete
 
-    const result = await SiteService.getSites();
+    await expect(SiteService.deleteSite(1)).resolves.toBeUndefined();
+  });
+});
 
-    expect(result).toBeDefined();
-    expect(result.length).toBe(2);
+describe('SiteService.toggleSite', () => {
+  test('toggle active → retourne site mis à jour', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [mockSite] })                    // findById
+      .mockResolvedValueOnce({ rows: [{ ...mockSite, active: false }] }); // toggle
+
+    const site = await SiteService.toggleSite(1, false);
+    expect(site.active).toBe(false);
   });
 });
