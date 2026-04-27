@@ -187,3 +187,29 @@ CREATE INDEX IF NOT EXISTS idx_notif_user         ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notif_read         ON notifications(read);
 CREATE INDEX IF NOT EXISTS idx_audit_user         ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_entity       ON audit_logs(entity_type, entity_id);
+
+-- ── STOCK DOCUMENTS ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS stock_documents (
+  id                  SERIAL PRIMARY KEY,
+  type                VARCHAR(20) NOT NULL CHECK (type IN ('reception','sortie','transfert')),
+  site_id             INTEGER NOT NULL REFERENCES sites(id),
+  destination_site_id INTEGER REFERENCES sites(id),
+  reference           VARCHAR(100),
+  notes               TEXT,
+  status              VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','validated','cancelled')),
+  created_by          INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  validated_by        INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  validated_at        TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS stock_document_items (
+  id          SERIAL PRIMARY KEY,
+  document_id INTEGER NOT NULL REFERENCES stock_documents(id) ON DELETE CASCADE,
+  product_id  INTEGER NOT NULL REFERENCES products(id),
+  quantity    INTEGER NOT NULL CHECK (quantity > 0),
+  unit_price  DECIMAL(12,2) NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_doc_site   ON stock_documents(site_id);
+CREATE INDEX IF NOT EXISTS idx_doc_status ON stock_documents(status);

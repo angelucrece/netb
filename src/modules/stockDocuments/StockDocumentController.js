@@ -1,46 +1,25 @@
+const asyncHandler = require('../../utils/asyncHandler');
+const { success, created, paginated } = require('../../utils/ApiResponse');
 const StockDocumentService = require('./StockDocumentService');
 
-class StockDocumentController {
+const getAll = asyncHandler(async (req, res) => {
+  const { documents, pagination } = await StockDocumentService.getAll(req.query);
+  paginated(res, documents, pagination);
+});
 
-  static async create(req, res) {
-    try {
-      const doc = await StockDocumentService.createDocument(
-        req.body,
-        req.user.id
-      );
+const getById = asyncHandler(async (req, res) => {
+  const doc = await StockDocumentService.getById(parseInt(req.params.id));
+  success(res, doc);
+});
 
-      res.status(201).json({
-        success: true,
-        data: doc
-      });
+const create = asyncHandler(async (req, res) => {
+  const doc = await StockDocumentService.create(req.body, req.user.id);
+  created(res, doc, 'Document créé');
+});
 
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
+const validate = asyncHandler(async (req, res) => {
+  const doc = await StockDocumentService.validate(parseInt(req.params.id), req.user.id);
+  success(res, doc, 'Document validé');
+});
 
-  static async validate(req, res) {
-    try {
-      const result = await StockDocumentService.validateDocument(
-        req.params.id,
-        req.user.id
-      );
-
-      res.json({
-        success: true,
-        data: result
-      });
-
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-}
-
-module.exports = StockDocumentController;
+module.exports = { getAll, getById, create, validate };

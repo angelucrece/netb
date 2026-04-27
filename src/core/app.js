@@ -46,9 +46,11 @@ app.use('/api/v1/users',      require('../modules/users/UserRoute'));
 app.use('/api/v1/categories', require('../modules/categories/CategoryRoute'));
 app.use('/api/v1/products',   require('../modules/products/ProductRoute'));
 app.use('/api/v1/stocks',     require('../modules/stocks/StockRoute'));
-app.use('/api/v1/movements',  require('../modules/stockMovement/StockMovementRoute'));
-app.use('/api/v1/inventory',  require('../modules/inventory/InventoryRoute'));
-app.use('/api/v1/documents',  require('../modules/stockDocuments/StockDocumentRoute'));
+app.use('/api/v1/movements',      require('../modules/stockMovement/StockMovementRoute'));
+app.use('/api/v1/inventory',      require('../modules/inventory/InventoryRoute'));
+app.use('/api/v1/documents',      require('../modules/stockDocuments/StockDocumentRoute'));
+app.use('/api/v1/reports',        require('../modules/reports/ReportRoute'));
+app.use('/api/v1/notifications',  require('../modules/notifications/NotificationRoute'));
 
 // ── 404 ────────────────────────────────────────────────────
 app.use((req, res, next) => {

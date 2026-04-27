@@ -1,90 +1,98 @@
 const db = require('../../config/database');
 
-class StockMovementRepository {
+const BASE = `
+  SELECT m.*,
+         p.name AS product_name, p.sku,
+         u.first_name || ' ' || u.last_name AS user_name,
+         s.name  AS site_name,
+         ds.name AS destination_site_name,
+         v.first_name || ' ' || v.last_name AS validator_name
+  FROM movements m
+  JOIN  products p  ON p.id  = m.product_id
+  LEFT JOIN users u  ON u.id  = m.user_id
+  LEFT JOIN sites s  ON s.id  = m.site_id
+  LEFT JOIN sites ds ON ds.id = m.destination_site_id
+  LEFT JOIN users v  ON v.id  = m.validated_by
+`;
 
-  static async create(data) {
-    const query = `
-      INSERT INTO stock_movements 
-      (product_id, site_id, type, quantity, user_id, reason, reference_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7)
-      RETURNING *`;
+class MovementRepository {
 
-    const values = [
-      data.productId,
-      data.siteId,
-      data.type,
-      data.quantity,
-      data.userId,
-      data.reason,
-      data.referenceId || null
-    ];
-
-    const result = await db.query(query, values);
-    return result.rows[0];
-  }
-
-  // 🔥 historique avec filtres + pagination
-  static async findAll(filters) {
-    let query = `SELECT * FROM stock_movements WHERE 1=1`;
-    let values = [];
+  static async findAll({ type, site_id, product_id, user_id, status,
+                         date_from, date_to, limit, offset }) {
+    const conds = [];
+    const vals  = [];
     let i = 1;
 
-    if (filters.productId) {
-      query += ` AND product_id = $${i++}`;
-      values.push(filters.productId);
-    }
+    if (type)       { conds.push(`m.type = $${i++}`);       vals.push(type); }
+    if (site_id)    { conds.push(`m.site_id = $${i++}`);    vals.push(site_id); }
+    if (product_id) { conds.push(`m.product_id = $${i++}`); vals.push(product_id); }
+    if (user_id)    { conds.push(`m.user_id = $${i++}`);    vals.push(user_id); }
+    if (status)     { conds.push(`m.status = $${i++}`);     vals.push(status); }
+    if (date_from)  { conds.push(`m.created_at >= $${i++}`); vals.push(date_from); }
+    if (date_to)    { conds.push(`m.created_at <= $${i++}`); vals.push(date_to); }
 
-    if (filters.siteId) {
-      query += ` AND site_id = $${i++}`;
-      values.push(filters.siteId);
-    }
-
-    if (filters.type) {
-      query += ` AND type = $${i++}`;
-      values.push(filters.type);
-    }
-
-    if (filters.startDate) {
-      query += ` AND created_at >= $${i++}`;
-      values.push(filters.startDate);
-    }
-
-    if (filters.endDate) {
-      query += ` AND created_at <= $${i++}`;
-      values.push(filters.endDate);
-    }
-
-    query += ` ORDER BY validated_at DESC LIMIT $${i++} OFFSET $${i++}`;
-    values.push(filters.limit || 10, filters.offset || 0);
-
-    const result = await db.query(query, values);
-    return result.rows;
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `${BASE} ${where} ORDER BY m.created_at DESC LIMIT $${i} OFFSET $${i+1}`,
+      [...vals, limit, offset]
+    );
+    return rows;
   }
 
-  // 🔥 statistiques
-  static async getStats(filters) {
-    let query = `
-      SELECT 
-        type,
-        COUNT(*) as total,
-        SUM(quantity) as total_quantity
-      FROM stock_movements
-      WHERE 1=1
-    `;
-
-    let values = [];
+  static async count({ type, site_id, product_id, user_id, status, date_from, date_to }) {
+    const conds = [];
+    const vals  = [];
     let i = 1;
+    if (type)       { conds.push(`m.type = $${i++}`);       vals.push(type); }
+    if (site_id)    { conds.push(`m.site_id = $${i++}`);    vals.push(site_id); }
+    if (product_id) { conds.push(`m.product_id = $${i++}`); vals.push(product_id); }
+    if (user_id)    { conds.push(`m.user_id = $${i++}`);    vals.push(user_id); }
+    if (status)     { conds.push(`m.status = $${i++}`);     vals.push(status); }
+    if (date_from)  { conds.push(`m.created_at >= $${i++}`); vals.push(date_from); }
+    if (date_to)    { conds.push(`m.created_at <= $${i++}`); vals.push(date_to); }
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT COUNT(*) FROM movements m ${where}`, vals
+    );
+    return parseInt(rows[0].count);
+  }
 
-    if (filters.siteId) {
-      query += ` AND site_id = $${i++}`;
-      values.push(filters.siteId);
-    }
+  static async findById(id) {
+    const { rows } = await db.query(`${BASE} WHERE m.id = $1`, [id]);
+    return rows[0] || null;
+  }
 
-    query += ` GROUP BY type`;
+  static async findPending(site_id) {
+    const cond = site_id ? 'AND m.site_id = $1' : '';
+    const vals = site_id ? [site_id] : [];
+    const { rows } = await db.query(
+      `${BASE} WHERE m.status = 'pending' ${cond} ORDER BY m.created_at ASC`, vals
+    );
+    return rows;
+  }
 
-    const result = await db.query(query, values);
-    return result.rows;
+  static async create({ type, product_id, site_id, destination_site_id,
+                        quantity, user_id, motif, supplier }) {
+    const { rows } = await db.query(
+      `INSERT INTO movements
+         (type, product_id, site_id, destination_site_id, quantity, user_id, motif, supplier)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      [type, product_id, site_id, destination_site_id||null,
+       quantity, user_id, motif||null, supplier||null]
+    );
+    return this.findById(rows[0].id);
+  }
+
+  static async updateStatus(id, status, validatedBy, rejectionReason, client) {
+    const executor = client || db;
+    const { rows } = await executor.query(
+      `UPDATE movements
+       SET status=$1, validated_by=$2, validated_at=NOW(), rejection_reason=$3
+       WHERE id=$4 RETURNING id`,
+      [status, validatedBy||null, rejectionReason||null, id]
+    );
+    return rows[0] || null;
   }
 }
 
-module.exports = StockMovementRepository;
+module.exports = MovementRepository;
