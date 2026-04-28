@@ -1,12 +1,17 @@
-const { body } = require('express-validator');
-const { handleValidationErrors } = require('../../middleware/validation');
+const Joi = require('joi');
 
-const validateInventory = [
-  body('productId').isInt(),
-  body('siteId').isInt(),
-  body('realQuantity').isInt({ min: 0 }),
+const startSessionSchema = Joi.object({
+  site_id: Joi.number().integer().positive().required(),
+  mode:    Joi.string().valid('complet','tournant').required(),
+});
 
-  handleValidationErrors
-];
+const itemSchema = Joi.object({
+  product_id:  Joi.number().integer().positive().required(),
+  counted_qty: Joi.number().integer().min(0).required(),
+});
 
-module.exports = { validateInventory };
+const updateItemSchema = Joi.object({
+  counted_qty: Joi.number().integer().min(0).required(),
+});
+
+module.exports = { startSessionSchema, itemSchema, updateItemSchema };

@@ -1,67 +1,72 @@
-
-// StockRepository.js
-// ===== Interaction avec la base de données pour les stocks =====
-const db = require('../../config/database'); // instance pg Pool
-const Stock = require('./StockModel');
+const db = require('../../config/database');
 
 class StockRepository {
 
-  // Obtenir tous les stocks avec option de filtrage par site ou produit
- static  async getAll(filters = {}) {
-    let query = 'SELECT * FROM stocks WHERE 1=1';
-    const params = [];
+  static async findAll({ site_id, product_id, alert, limit, offset }) {
+    const conds = ['p.active = true'];
+    const vals  = [];
     let i = 1;
+    if (site_id)    { conds.push(`ps.site_id = $${i}`);    vals.push(site_id);    i++; }
+    if (product_id) { conds.push(`ps.product_id = $${i}`); vals.push(product_id); i++; }
+    if (alert === 'true') { conds.push(`ps.quantity <= ps.min_stock`); }
 
-    if (filters.site_id) {
-      query += ` AND site_id = $${i++}`;
-      params.push(filters.site_id);
-    }
-    if (filters.product_id) {
-      query += ` AND product_id = $${i++}`;
-      params.push(filters.product_id);
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    const result = await db.query(query, params);
-    return result.rows.map(row => new Stock(row));
+    const { rows } = await db.query(
+      `SELECT ps.*, p.name AS product_name, p.sku, s.name AS site_name
+       FROM product_stocks ps
+       JOIN products p ON p.id = ps.product_id
+       JOIN sites s ON s.id = ps.site_id
+       WHERE ${conds.join(' AND ')}
+       ORDER BY p.name
+       LIMIT $${i} OFFSET $${i+1}`,
+      [...vals, limit || 50, offset || 0]
+    );
+    return rows;
   }
 
-  // Obtenir un stock spécifique par product_id et site_id
-  static async getByProductAndSite(product_id, site_id) {
-    const query = 'SELECT * FROM stocks WHERE product_id=$1 AND site_id=$2';
-    const result = await db.query(query, [product_id, site_id]);
-    return result.rows[0] ? new Stock(result.rows[0]) : null;
+  static async findByProductAndSite(product_id, site_id) {
+    const { rows } = await db.query(
+      `SELECT * FROM product_stocks WHERE product_id=$1 AND site_id=$2`,
+      [product_id, site_id]
+    );
+    return rows[0] || null;
   }
 
-  // Ajouter un stock
-  static async add(stockData) {
-    const query = `
-      INSERT INTO stocks (product_id, site_id, quantity, threshold)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *`;
-    const { product_id, site_id, quantity, threshold } = stockData;
-
-    const result = await db.query(query, [product_id, site_id, quantity, threshold]);
-    return new Stock(result.rows[0]);
+  // INSERT ou UPDATE si déjà existant
+  static async upsert(product_id, site_id, quantity, min_stock, max_stock, location) {
+    const { rows } = await db.query(
+      `INSERT INTO product_stocks (product_id, site_id, quantity, min_stock, max_stock, location)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (product_id, site_id)
+       DO UPDATE SET quantity = product_stocks.quantity + EXCLUDED.quantity,
+                     min_stock = COALESCE(EXCLUDED.min_stock, product_stocks.min_stock),
+                     max_stock = COALESCE(EXCLUDED.max_stock, product_stocks.max_stock),
+                     location  = COALESCE(EXCLUDED.location,  product_stocks.location),
+                     updated_at = NOW()
+       RETURNING *`,
+      [product_id, site_id, quantity, min_stock||0, max_stock||9999, location||null]
+    );
+    return rows[0];
   }
 
-  // Mettre à jour un stock existant
-  static async update(stockId, updateData) {
-    const { quantity, threshold } = updateData;
-    const query = `
-      UPDATE stocks
-      SET quantity=$1, threshold=$2, updated_at=NOW()
-      WHERE id=$3
-      RETURNING *`;
-    const result = await db.query(query, [quantity, threshold, stockId]);
-    return new Stock(result.rows[0]);
+  static async adjustQuantity(product_id, site_id, delta, client) {
+    const executor = client || db;
+    const { rows } = await executor.query(
+      `UPDATE product_stocks SET quantity = quantity + $1, updated_at = NOW()
+       WHERE product_id=$2 AND site_id=$3
+       RETURNING *`,
+      [delta, product_id, site_id]
+    );
+    return rows[0] || null;
   }
 
-  // Supprimer un stock
-  static async delete(stockId) {
-    const query = 'DELETE FROM stocks WHERE id=$1';
-    await db.query(query, [stockId]);
+  static async setQuantity(product_id, site_id, quantity, client) {
+    const executor = client || db;
+    const { rows } = await executor.query(
+      `UPDATE product_stocks SET quantity=$1, updated_at=NOW()
+       WHERE product_id=$2 AND site_id=$3 RETURNING *`,
+      [quantity, product_id, site_id]
+    );
+    return rows[0] || null;
   }
 }
 

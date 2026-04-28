@@ -1,81 +1,21 @@
-const express = require('express');
-const router = express.Router();
-
-const CategoryController = require('./CategoryController');
-
-
-
-const { authenticateToken, requireRoles } = require('../../middleware/auth');
-const { validateCategory, validateId } = require('./CategoryValidation');
-
-//  ROUTES DE RECHERCHE (à mettre AVANT /:id)
-/**
- * @swagger
- * /api/categories/search:
- *   get:
- *     summary: Recherche des catégories
- *     tags: [Catégories]
- *     responses:
- *       200:
- *         description: Liste des catégories trouvées.
- */
-router.get('/search', authenticateToken, CategoryController.search);
+const express    = require('express');
+const router     = express.Router();
+const controller = require('./CategoryController');
+const { authenticate, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validation');
+const { categorySchema } = require('./CategoryValidation');
 
 /**
  * @swagger
- * /api/categories/autocomplete:
- *   get:
- *     summary: Suggestions de catégories
- *     tags: [Catégories]
- *     responses:
- *       200:
- *         description: Liste des catégories suggérées.
+ * tags:
+ *   name: Catégories
+ *   description: Familles de produits
  */
-router.get('/autocomplete', authenticateToken, CategoryController.autocomplete);
 
-//  ROUTES CRUD
-// GET all
-/**
- * @swagger
- * /api/categories:
- *   get:
- *     summary: Récupère toutes les catégories
- *     tags: [Catégories]
- *     responses:
- *       200:
- *         description: Liste de toutes les catégories.
- */
-router.get('/',  CategoryController.getAll);
-
-// GET by id
-router.get('/:id', authenticateToken, validateId, CategoryController.getById);
-
-// CREATE
-router.post(
-  '/',
-  authenticateToken,
-  requireRoles('administrateur'),
-  validateCategory,
-  CategoryController.create
-);
-
-// UPDATE
-router.put(
-  '/:id',
-  authenticateToken,
-  requireRoles('administrateur'),
-  validateId,
-  validateCategory,
-  CategoryController.update
-);
-
-// DELETE
-router.delete(
-  '/:id',
-  authenticateToken,
-  requireRoles('administrateur'),
-  validateId,
-  CategoryController.delete
-);
+router.get('/',     authenticate, controller.getAll);
+router.get('/:id',  authenticate, controller.getById);
+router.post('/',    authenticate, authorize('admin'), validate(categorySchema), controller.create);
+router.put('/:id',  authenticate, authorize('admin'), validate(categorySchema), controller.update);
+router.delete('/:id', authenticate, authorize('admin'), controller.remove);
 
 module.exports = router;

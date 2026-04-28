@@ -1,65 +1,25 @@
+const asyncHandler = require('../../utils/asyncHandler');
+const { success }  = require('../../utils/ApiResponse');
+const service      = require('./AuthService');
 
-// Description : Controller AUTH
+const login = asyncHandler(async (req, res) => {
+  const data = await service.login(req.body, req.ip);
+  success(res, data, 'Connexion réussie');
+});
 
-const service = require('./AuthService');
-const logger = require('../../config/logger');
+const refresh = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  const data = await service.refresh(refreshToken);
+  success(res, data, 'Token renouvelé');
+});
 
-const login = async (req, res) => {
-  try {
-    const result = await service.login(req.body, req.ip);
+const logout = asyncHandler(async (req, res) => {
+  await service.logout(req.user.id);
+  success(res, null, 'Déconnexion réussie');
+});
 
-    res.json(result);
-  } catch (error) {
-    logger.error('Controller login error', { error: error.message });
+const me = asyncHandler(async (req, res) => {
+  success(res, req.user, 'Profil token');
+});
 
-    res.status(401).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
-
-const register = async (req, res) => {
-  try {
-    const result = await service.register(req.body, req.user);
-
-    res.status(201).json(result);
-  } catch (error) {
-    logger.error('Controller register error', { error: error.message });
-
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
-
-const verify = async (req, res) => {
-  res.json({
-    success: true,
-    message: 'Token valide',
-    user: req.user
-  });
-};
-
-const refresh = async (req, res) => {
-  try {
-    const result = await service.refresh(req.user);
-
-    res.json(result);
-  } catch (error) {
-    logger.error('Controller refresh error', { error: error.message });
-
-    res.status(401).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
-
-module.exports = {
-  login,
-  register,
-  verify,
-  refresh
-};
+module.exports = { login, refresh, logout, me };

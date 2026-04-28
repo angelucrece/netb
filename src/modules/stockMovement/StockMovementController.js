@@ -1,34 +1,47 @@
-const StockMovementService = require('./StockMovementService');
+const asyncHandler = require('../../utils/asyncHandler');
+const { success, created, paginated } = require('../../utils/ApiResponse');
+const MovementService = require('./StockMovementService');
 
-class StockMovementController {
+const getAll = asyncHandler(async (req, res) => {
+  const { movements, pagination } = await MovementService.getAll(req.query);
+  paginated(res, movements, pagination);
+});
 
-  static async getAll(req, res) {
-    try {
-      const data = await StockMovementService.getMovements(req.query);
+const getById = asyncHandler(async (req, res) => {
+  const m = await MovementService.getById(parseInt(req.params.id));
+  success(res, m);
+});
 
-      res.json({
-        success: true,
-        data
-      });
+const getPending = asyncHandler(async (req, res) => {
+  const list = await MovementService.getPending(req.query.site_id);
+  success(res, list);
+});
 
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
+const createEntry = asyncHandler(async (req, res) => {
+  const m = await MovementService.createEntry(req.body, req.user.id);
+  created(res, m, 'Entrée enregistrée');
+});
 
-  static async stats(req, res) {
-    try {
-      const data = await StockMovementService.getStats(req.query);
+const createExit = asyncHandler(async (req, res) => {
+  const m = await MovementService.createExit(req.body, req.user.id);
+  created(res, m, 'Sortie enregistrée');
+});
 
-      res.json({
-        success: true,
-        data
-      });
+const createTransfer = asyncHandler(async (req, res) => {
+  const result = await MovementService.createTransfer(req.body, req.user.id);
+  created(res, result, 'Transfert effectué');
+});
 
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-}
+const validate = asyncHandler(async (req, res) => {
+  const m = await MovementService.validate(parseInt(req.params.id), req.user.id);
+  success(res, m, 'Mouvement validé');
+});
 
-module.exports = StockMovementController;
+const reject = asyncHandler(async (req, res) => {
+  const m = await MovementService.reject(
+    parseInt(req.params.id), req.body.rejection_reason, req.user.id
+  );
+  success(res, m, 'Mouvement rejeté');
+});
+
+module.exports = { getAll, getById, getPending, createEntry, createExit, createTransfer, validate, reject };

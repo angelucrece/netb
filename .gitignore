@@ -10,3 +10,11 @@ logs/
 *.suo
 *.ntvs*
 *.njsproj
+
+# Fichiers de planification interne (non destinés au dépôt)
+backend.md
+gitbackend.md
+devguide.md
+
+# Uploads locaux
+uploads/

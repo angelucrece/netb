@@ -1,64 +1,68 @@
-
-// modules/sites/siteRepository.js
-// Description : Accès aux sites dans la base PostgreSQL
-
 const db = require('../../config/database');
-const Site = require('./siteModel');
 
 class SiteRepository {
-  // Récupérer tous les sites
-  static async findAll() {
-    const result = await db.query('SELECT * FROM sites ORDER BY id ASC');
-    return result.rows.map(row => new Site(row));
+  static async findAll(activeOnly = true) {
+    const where = activeOnly ? 'WHERE active = true' : '';
+    const { rows } = await db.query(`SELECT * FROM sites ${where} ORDER BY name ASC`);
+    return rows;
   }
 
-  // Récupérer un site par id
   static async findById(id) {
-    const result = await db.query('SELECT * FROM sites WHERE id = $1', [id]);
-    if (!result.rows.length) return null;
-    return new Site(result.rows[0]);
-  }
-
-  // Récupérer un site par nom
-  static async findByName(name) {
-    const result = await db.query('SELECT * FROM sites WHERE name = $1', [name]);
-    if (!result.rows.length) return null;
-    return new Site(result.rows[0]);
-  }
-
-  // Créer un nouveau site
-  static async create({ name, description, created_at, adress, city, postal_code, country, responsible_name, responsible_email, responsible_phone, type }) {
-    const result = await db.query(
-      'INSERT INTO sites (name, description, created_at, adress, city, postal_code, country, responsible_name, responsible_email, responsible_phone, type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-      [name, description, created_at, adress, city, postal_code, country, responsible_name, responsible_email, responsible_phone, type]
+    const { rows } = await db.query(
+      `SELECT s.*,
+              COUNT(DISTINCT ps.product_id) AS product_count,
+              COALESCE(SUM(ps.quantity), 0) AS total_stock
+       FROM sites s
+       LEFT JOIN product_stocks ps ON ps.site_id = s.id
+       WHERE s.id = $1
+       GROUP BY s.id`,
+      [id]
     );
-    return new Site(result.rows[0]);
+    return rows[0] || null;
   }
 
-  // Mettre à jour un site
-  static async update(id, fields) {
-    const updates = [];
-    const values = [];
-    let idx = 1;
-
-    for (let key in fields) {
-      updates.push(`${key} = $${idx}`);
-      values.push(fields[key]);
-      idx++;
-    }
-
-    if (!updates.length) return await this.findById(id);
-
-    values.push(id);
-    const query = `UPDATE sites SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`;
-    const result = await db.query(query, values);
-    return new Site(result.rows[0]);
+  static async create(data) {
+    const { name, type, address, city, postal_code, country,
+            responsible_name, responsible_email, responsible_phone } = data;
+    const { rows } = await db.query(
+      `INSERT INTO sites (name, type, address, city, postal_code, country,
+                          responsible_name, responsible_email, responsible_phone)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [name, type, address||null, city||null, postal_code||null,
+       country||'Cameroun', responsible_name||null, responsible_email||null, responsible_phone||null]
+    );
+    return rows[0];
   }
 
-  // Supprimer un site
-  static async delete(id) {
-    await db.query('DELETE FROM sites WHERE id = $1', [id]);
-    return true;
+  static async update(id, data) {
+    const fields = ['name','type','address','city','postal_code','country',
+                    'responsible_name','responsible_email','responsible_phone'];
+    const sets   = fields.map((f, i) => `${f} = $${i + 2}`).join(', ');
+    const vals   = fields.map(f => data[f] ?? null);
+    const { rows } = await db.query(
+      `UPDATE sites SET ${sets}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [id, ...vals]
+    );
+    return rows[0] || null;
+  }
+
+  static async toggle(id, active) {
+    const { rows } = await db.query(
+      `UPDATE sites SET active = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [active, id]
+    );
+    return rows[0] || null;
+  }
+
+  static async softDelete(id) {
+    await db.query(`UPDATE sites SET active = false, updated_at = NOW() WHERE id = $1`, [id]);
+  }
+
+  static async hasStock(id) {
+    const { rows } = await db.query(
+      `SELECT 1 FROM product_stocks WHERE site_id = $1 AND quantity > 0 LIMIT 1`, [id]
+    );
+    return rows.length > 0;
   }
 }
 

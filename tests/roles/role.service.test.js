@@ -1,42 +1,37 @@
-//fichier de tests pour le service de gestion des roles utilisateurs
-
-const RoleService = require('../../src/modules/roles/RoleService');
+jest.mock('../../src/config/database');
 const db = require('../../src/config/database');
+const RoleService = require('../../src/modules/roles/RoleService');
 
-// Mock de la base de données
-jest.mock('../../src/config/database', () => ({
-  query: jest.fn()
-}));
+const mockRoles = [
+  { id: 1, name: 'admin',          label: 'Administrateur', level: 1 },
+  { id: 2, name: 'operator_stock', label: 'Opérateur Stock', level: 2 },
+  { id: 3, name: 'controller',     label: 'Contrôleur',     level: 3 },
+  { id: 4, name: 'site_manager',   label: 'Responsable Site', level: 4 },
+  { id: 5, name: 'viewer',         label: 'Lecteur',        level: 5 },
+  { id: 6, name: 'decision_maker', label: 'Décideur',       level: 6 },
+  { id: 7, name: 'accountant',     label: 'Comptable',      level: 7 },
+];
 
-describe('RoleService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+beforeEach(() => jest.clearAllMocks());
+
+describe('RoleService.getRoles', () => {
+  test('retourne les 7 rôles', async () => {
+    db.query.mockResolvedValueOnce({ rows: mockRoles });
+    const roles = await RoleService.getRoles();
+    expect(roles).toHaveLength(7);
+    expect(roles[0].name).toBe('admin');
+  });
+});
+
+describe('RoleService.getRoleById', () => {
+  test('rôle existant → retourne le rôle', async () => {
+    db.query.mockResolvedValueOnce({ rows: [mockRoles[0]] });
+    const role = await RoleService.getRoleById(1);
+    expect(role.name).toBe('admin');
   });
 
-  it('doit créer un rôle', async () => {
-    // Mock de l'insertion du rôle
-    db.query.mockResolvedValue({
-      rows: [{ id: 1, name: 'Admin' }]
-    });
-
-    const result = await RoleService.createRole({ name: 'Admin' });
-
-    expect(result).toBeDefined();
-    expect(result.name).toBe('Admin');
-  });
-
-  it('doit récupérer tous les rôles', async () => {
-    // Mock de la récupération des rôles
-    db.query.mockResolvedValue({
-      rows: [
-        { id: 1, name: 'Admin' },
-        { id: 2, name: 'User' }
-      ]
-    });
-
-    const result = await RoleService.getRoles();
-
-    expect(result).toBeDefined();
-    expect(result.length).toBe(2);
+  test('rôle inexistant → erreur 404', async () => {
+    db.query.mockResolvedValueOnce({ rows: [] });
+    await expect(RoleService.getRoleById(99)).rejects.toMatchObject({ statusCode: 404 });
   });
 });
