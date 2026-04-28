@@ -1,164 +1,77 @@
-// Description : Middleware d'authentification JWT
-// Vérifie les tokens et gère l'accès basé sur les rôles
-
 const jwt = require('jsonwebtoken');
+const db = require('../config/database');
+const ApiError = require('../utils/ApiError');
+const asyncHandler = require('../utils/asyncHandler');
 const logger = require('../config/logger');
 
-// Middleware pour vérifier l'authentification JWT
-const authenticateToken = (req, res, next) => {
+/**
+ * Vérifie le JWT, charge l'utilisateur depuis la DB, vérifie qu'il est actif.
+ * Injecte req.user = { id, email, role: { id, name }, site_id }
+ */
+const authenticate = asyncHandler(async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) throw ApiError.unauthorized('Token d\'authentification requis');
+
+  let decoded;
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
-
-    if (!token) {
-      logger.warn('Tentative accès sans token', { 
-        ip: req.ip, 
-        url: req.url 
-      });
-      return res.status(401).json({
-        success: false,
-        message: 'Token d\'authentification requis'
-      });
-    }
-
-    // Vérification et décodage du token
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) {
-        logger.warn('Token invalide:', { 
-          error: err.message, 
-          ip: req.ip 
-        });
-        
-        // Gestion des différents types d'erreurs JWT
-        let message = 'Token invalide';
-        if (err.name === 'TokenExpiredError') {
-          message = 'Token expiré, veuillez vous reconnecter';
-        } else if (err.name === 'JsonWebTokenError') {
-          message = 'Token malformé';
-        }
-        
-        return res.status(403).json({
-          success: false,
-          message
-        });
-      }
-
-      // Ajout des informations utilisateur à la requête
-      req.user = user;
-      logger.debug('Authentification réussie', { 
-        userId: user.id, 
-        email: user.email 
-      });
-      next();
-    });
-  } catch (error) {
-    logger.error('Erreur middleware authentification:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur interne d\'authentification'
-    });
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    const msg = err.name === 'TokenExpiredError'
+      ? 'Token expiré, veuillez vous reconnecter'
+      : 'Token invalide';
+    throw ApiError.unauthorized(msg);
   }
-};
 
-// Middleware pour vérifier le rôle administrateur
-const requireAdmin = (req, res, next) => {
-  try {
-    if (!req.user) {
-      logger.error('requireAdmin appelé sans authentification préalable');
-      return res.status(401).json({
-        success: false,
-        message: 'Authentification requise'
-      });
-    }
+  const result = await db.query(
+    `SELECT u.id, u.email, u.active, u.site_id,
+            r.id as role_id, r.name as role_name
+     FROM users u
+     LEFT JOIN roles r ON u.role_id = r.id
+     WHERE u.id = $1`,
+    [decoded.id]
+  );
 
-    if (req.user.role !== 'administrateur') {
-      logger.warn('Accès admin refusé:', { 
-        userId: req.user.id, 
-        role: req.user.role,
-        url: req.url
-      });
-      return res.status(403).json({
-        success: false,
-        message: 'Accès administrateur requis'
-      });
-    }
+  const user = result.rows[0];
+  if (!user || !user.active) throw ApiError.unauthorized('Compte inactif ou introuvable');
 
-    logger.debug('Accès admin autorisé', { userId: req.user.id });
-    next();
-  } catch (error) {
-    logger.error('Erreur middleware requireAdmin:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur vérification privilèges'
-    });
-  }
-};
-
-// Middleware pour vérifier les rôles autorisés (flexible)
-const requireRoles = (...roles) => {
-  return (req, res, next) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Authentification requise'
-        });
-      }
-
-      if (!roles.includes(req.user.role)) {
-        logger.warn('Accès refusé - rôle insuffisant:', { 
-          userId: req.user.id, 
-          userRole: req.user.role,
-          requiredRoles: roles,
-          url: req.url
-        });
-        return res.status(403).json({
-          success: false,
-          message: `Accès refusé. Rôles requis: ${roles.join(', ')}`
-        });
-      }
-
-      logger.debug('Accès autorisé', { 
-        userId: req.user.id, 
-        role: req.user.role 
-      });
-      next();
-    } catch (error) {
-      logger.error('Erreur middleware requireRoles:', error.message);
-      res.status(500).json({
-        success: false,
-        message: 'Erreur vérification rôles'
-      });
-    }
+  req.user = {
+    id:      user.id,
+    email:   user.email,
+    site_id: user.site_id,
+    role: {
+      id:   user.role_id,
+      name: user.role_name,
+    },
   };
-};
 
-// Middleware optionnel pour extraire l'utilisateur si token présent
-const optionalAuth = (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+  logger.debug('[Auth] Authentifié', { userId: user.id, role: user.role_name });
+  next();
+});
 
-    if (!token) {
-      return next(); // Pas de token, continuer sans authentification
-    }
+/**
+ * Contrôle d'accès par rôle (RBAC).
+ * Usage : authorize('admin', 'controller')
+ */
+const authorize = (...roles) => (req, res, next) => {
+  if (!req.user) throw ApiError.unauthorized();
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (!err) {
-        req.user = user;
-        logger.debug('Authentification optionnelle réussie', { userId: user.id });
-      }
-      next(); // Continuer même si token invalide
+  if (!roles.includes(req.user.role.name)) {
+    logger.warn('[Auth] Accès refusé', {
+      userId: req.user.id,
+      userRole: req.user.role.name,
+      required: roles,
+      url: req.originalUrl,
     });
-  } catch (error) {
-    logger.error('Erreur middleware optionalAuth:', error.message);
-    next(); // Continuer malgré l'erreur
+    throw ApiError.forbidden(`Rôle requis : ${roles.join(' ou ')}`);
   }
+  next();
 };
 
-module.exports = {
-  authenticateToken,
-  requireAdmin,
-  requireRoles,
-  optionalAuth
-};
+// Alias pour compatibilité avec l'ancien code
+const authenticateToken = authenticate;
+const requireRoles = (...roles) => authorize(...roles);
+const requireAdmin = authorize('admin');
+
+module.exports = { authenticate, authorize, authenticateToken, requireRoles, requireAdmin };

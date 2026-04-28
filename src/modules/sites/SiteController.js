@@ -1,102 +1,35 @@
+const asyncHandler = require('../../utils/asyncHandler');
+const { success, created } = require('../../utils/ApiResponse');
+const SiteService = require('./SiteService');
 
+const getAll = asyncHandler(async (req, res) => {
+  const sites = await SiteService.getSites(true);
+  success(res, sites);
+});
 
-const SiteService = require('./siteService');
+const getById = asyncHandler(async (req, res) => {
+  const site = await SiteService.getSiteById(parseInt(req.params.id));
+  success(res, site);
+});
 
-/**
- * Controller = gestion des requêtes HTTP
- */
-class SiteController {
+const create = asyncHandler(async (req, res) => {
+  const site = await SiteService.createSite(req.body);
+  created(res, site, 'Site créé avec succès');
+});
 
-  // GET /sites
-  static async getAll(req, res) {
-    try {
-      const sites = await SiteService.getSites();
+const update = asyncHandler(async (req, res) => {
+  const site = await SiteService.updateSite(parseInt(req.params.id), req.body);
+  success(res, site, 'Site mis à jour');
+});
 
-      res.json({
-        success: true,
-        data: sites
-      });
+const toggle = asyncHandler(async (req, res) => {
+  const site = await SiteService.toggleSite(parseInt(req.params.id), req.body.active);
+  success(res, site, `Site ${req.body.active ? 'activé' : 'désactivé'}`);
+});
 
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
+const remove = asyncHandler(async (req, res) => {
+  await SiteService.deleteSite(parseInt(req.params.id));
+  success(res, null, 'Site supprimé');
+});
 
-  // GET /sites/:id
-  static async getById(req, res) {
-    try {
-      const site = await SiteService.getSiteById(req.params.id);
-
-      res.json({
-        success: true,
-        data: site
-      });
-
-    } catch (error) {
-      res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-    // POST /sites
-  static async create(req, res) {
-    try {
-      const site = await SiteService.createSite(req.body);
-
-      res.status(201).json({
-        success: true,
-        data: site
-      });
-
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  // PUT /sites/:id
-  static async update(req, res) {
-    try {
-      const site = await SiteService.updateSite(req.params.id, req.body);
-
-      res.json({
-        success: true,
-        data: site
-      });
-
-    } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-  // DELETE /sites/:id
-  static async delete(req, res) {
-    try {
-      await SiteService.deleteSite(req.params.id);
-
-      res.json({
-        success: true,
-        message: 'Site supprimé avec succès'
-      });
-
-    } catch (error) {
-      res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-
-}
-
-module.exports = SiteController;
+module.exports = { getAll, getById, create, update, toggle, remove };

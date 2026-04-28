@@ -1,69 +1,51 @@
-// const express = require('express');
-// const router = express.Router();
-
-// const StockMovementController = require('./StockMovementController');
-// const { authenticateToken } = require('../../middleware/auth');
-
-// /**
-//  * @swagger
-//  * tags:
-//  *   name: StockMovements
-//  */
-
-// /**
-//  * @swagger
-//  * /api/movements:
-//  *   get:
-//  *     summary: Liste des mouvements avec filtres
-//  */
-// router.get('/', authenticateToken, StockMovementController.getAll);
-
-// /**
-//  * @swagger
-//  * /api/movements:
-//  *   post:
-//  *     summary: Créer un mouvement
-//  */
-// router.post('/', authenticateToken, StockMovementController.create);
-
-// /**
-//  * @swagger
-//  * /api/movements/stats:
-//  *   get:
-//  *     summary: Statistiques des mouvements
-//  */
-// router.get('/stats', authenticateToken, StockMovementController.stats);
-
-// module.exports = router;
-
-
-
-const express = require('express');
-const router = express.Router();
-
-const StockMovementController = require('./StockMovementController');
-const { authenticateToken } = require('../../middleware/auth');
+const express    = require('express');
+const router     = express.Router();
+const controller = require('./StockMovementController');
+const { authenticate, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validation');
+const { entrySchema, exitSchema, transferSchema, rejectSchema } = require('./StockMovementValidation');
 
 /**
  * @swagger
  * tags:
- *   name: StockMovements
+ *   name: Mouvements
+ *   description: Réceptions, sorties, transferts, validations
  */
 
-/**
- * @swagger
- * /api/movements:
- *   get:
- *     summary: Historique des mouvements
- */
-router.get('/', authenticateToken, StockMovementController.getAll);
+// Statiques AVANT /:id
+router.get('/pending', authenticate, authorize('admin'), controller.getPending);
 
-/**
- * @swagger
- * /api/movements/stats:
- *   get:
- *     summary: Statistiques des mouvements
- */
-router.get('/stats', authenticateToken, StockMovementController.stats);
+router.get('/',    authenticate, controller.getAll);
+router.get('/:id', authenticate, controller.getById);
+
+router.post('/in',
+  authenticate,
+  validate(entrySchema),
+  controller.createEntry
+);
+
+router.post('/out',
+  authenticate,
+  validate(exitSchema),
+  controller.createExit
+);
+
+router.post('/transfer',
+  authenticate,
+  authorize('admin','operator_stock','controller','site_manager'),
+  validate(transferSchema),
+  controller.createTransfer
+);
+
+router.patch('/:id/validate',
+  authenticate, authorize('admin'),
+  controller.validate
+);
+
+router.patch('/:id/reject',
+  authenticate, authorize('admin'),
+  validate(rejectSchema),
+  controller.reject
+);
 
 module.exports = router;

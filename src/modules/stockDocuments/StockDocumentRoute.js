@@ -1,30 +1,29 @@
-const express = require('express');
-const router = express.Router();
-
-const StockDocumentController = require('./StockDocumentController');
-const { authenticateToken } = require('../../middleware/auth');
-const { validateDocument } = require('./StockDocumentValidation');
+const express    = require('express');
+const router     = express.Router();
+const controller = require('./StockDocumentController');
+const { authenticate, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validation');
+const { documentSchema } = require('./StockDocumentValidation');
 
 /**
  * @swagger
  * tags:
- *   name: StockDocuments
+ *   name: Documents
+ *   description: Bons de réception, sortie, transfert
  */
 
-/**
- * @swagger
- * /api/documents:
- *   post:
- *     summary: Créer un bordereau
- */
-router.post('/', authenticateToken, validateDocument, StockDocumentController.create);
+router.get('/',    authenticate, controller.getAll);
+router.get('/:id', authenticate, controller.getById);
 
-/**
- * @swagger
- * /api/documents/{id}/validate:
- *   post:
- *     summary: Valider un bordereau
- */
-router.post('/:id/validate', authenticateToken, StockDocumentController.validate);
+router.post('/',
+  authenticate,
+  validate(documentSchema),
+  controller.create
+);
+
+router.post('/:id/validate',
+  authenticate, authorize('admin','controller'),
+  controller.validate
+);
 
 module.exports = router;

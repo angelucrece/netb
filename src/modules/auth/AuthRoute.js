@@ -1,20 +1,23 @@
-// Description : Routes d'authentification
-
-const express = require('express');
-const router = express.Router();
-
+const express    = require('express');
+const router     = express.Router();
 const controller = require('./AuthController');
+const { validate }   = require('../../middleware/validation');
+const { authenticate } = require('../../middleware/auth');
+const { authLimiter }  = require('../../middleware/rateLimiter');
+const { loginSchema, refreshSchema } = require('./AuthValidation');
 
-const { validateLogin, validateRegister } = require('../../middleware/validation');
-const { authLimiter } = require('../../middleware/rateLimiter');
-const { authenticateToken, requireRoles } = require('../../middleware/auth');
-
-// Login
 /**
  * @swagger
- * /api/auth/login:
+ * tags:
+ *   name: Auth
+ *   description: Authentification JWT
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/login:
  *   post:
- *     summary: Connecte un utilisateur
+ *     summary: Connexion utilisateur
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -22,37 +25,22 @@ const { authenticateToken, requireRoles } = require('../../middleware/auth');
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, password]
  *             properties:
- *               email:
- *                 type: string
- *                 example: "admin@nethasoft.com"
- *               password:
- *                 type: string
- *                 example: "Admin123!"
+ *               email:    { type: string, example: "naelle@nethastock.com" }
+ *               password: { type: string, example: "noutong1" }
+ *               site_id:  { type: integer, example: 1 }
  *     responses:
- *       200:
- *         description: Connexion réussie.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *       400:
- *         description: Données de connexion invalides.
- *       401:
- *         description: Non autorisé. Identifiants incorrects.
+ *       200: { description: Connexion réussie – retourne accessToken + refreshToken }
+ *       401: { description: Identifiants incorrects }
  */
-router.post('/login', authLimiter,validateLogin, controller.login);
+router.post('/login', authLimiter, validate(loginSchema), controller.login);
 
-// Register (admin seulement)
 /**
  * @swagger
- * /api/auth/register:
+ * /api/v1/auth/refresh:
  *   post:
- *     summary: Enregistre un nouvel utilisateur
+ *     summary: Renouveler l'access token
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -60,72 +48,39 @@ router.post('/login', authLimiter,validateLogin, controller.login);
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [refreshToken]
  *             properties:
- *               email:
- *                 type: string
- *                 example: "user@example.com"
- *               password:
- *                 type: string
- *                 example: "password123"
- *               name:
- *                 type: string
- *                 example: "John Doe"
+ *               refreshToken: { type: string }
  *     responses:
- *       201:
- *         description: Utilisateur enregistré avec succès.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 1
- *                 email:
- *                   type: string
- *                   example: "user@example.com"
- *                 name:
- *                   type: string
- *                   example: "John Doe"
- *       400:
- *         description: Données d'enregistrement invalides.
+ *       200: { description: Nouveau accessToken }
+ *       401: { description: Refresh token invalide }
  */
-router.post(
-  '/register',
-  authenticateToken,
-  requireRoles('administrateur'),
-  validateRegister,
-  controller.register
-);
+router.post('/refresh', validate(refreshSchema), controller.refresh);
 
-// Vérifier token
 /**
  * @swagger
- * /api/auth/verify:
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Déconnexion (invalide le refresh token)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200: { description: Déconnexion réussie }
+ */
+router.post('/logout', authenticate, controller.logout);
+
+/**
+ * @swagger
+ * /api/v1/auth/me:
  *   get:
- *     summary: Vérifie la validité d'un token
+ *     summary: Infos de l'utilisateur connecté (depuis le token)
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
- *       200:
- *         description: Token valide.
- *       401:
- *         description: Token invalide.
+ *       200: { description: Payload du token }
  */
-router.get('/verify', authenticateToken, controller.verify);
-
-// Refresh token
-/**
- * @swagger
- * /api/auth/refresh:
- *   post:
- *     summary: Régénère un nouveau token
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Nouveau token généré.
- *       401:
- *         description: Token invalide.
- */
-router.post('/refresh', authenticateToken, controller.refresh);
+router.get('/me', authenticate, controller.me);
 
 module.exports = router;

@@ -1,52 +1,39 @@
+const SiteRepository = require('./SiteRepository');
+const ApiError = require('../../utils/ApiError');
 
-
-
-const SiteRepository = require('./siteRepository');
-const Site = require('./siteModel');
-
-/**
- * Service = logique métier
- * Transforme les données et applique des règles
- */
 class SiteService {
-
-  // Retourne tous les sites
-  static async getSites() {
-    const sites = await SiteRepository.findAll();
-
-    // Transformation en objets Site
-    return sites.map(site => new Site(site));
+  static async getSites(activeOnly = true) {
+    return await SiteRepository.findAll(activeOnly);
   }
 
-  // Retourne un site spécifique
   static async getSiteById(id) {
     const site = await SiteRepository.findById(id);
-
-    if (!site) {
-      throw new Error('SITE_NOT_FOUND');
-    }
-
-    return new Site(site);
+    if (!site) throw ApiError.notFound('Site introuvable');
+    return site;
   }
 
-  // Créer un nouveau site
   static async createSite(data) {
-    const newSite = await SiteRepository.create(data);
-    return new Site(newSite);
+    return await SiteRepository.create(data);
   }
 
-  // Mettre à jour un site existant
   static async updateSite(id, data) {
-    const updatedSite = await SiteRepository.update(id, data);
-    return new Site(updatedSite);
+    await this.getSiteById(id); // vérifie existence
+    const updated = await SiteRepository.update(id, data);
+    if (!updated) throw ApiError.notFound('Site introuvable');
+    return updated;
   }
 
-  // Supprimer un site
+  static async toggleSite(id, active) {
+    await this.getSiteById(id);
+    return await SiteRepository.toggle(id, active);
+  }
+
   static async deleteSite(id) {
-    await SiteRepository.delete(id);
-    return true;
+    await this.getSiteById(id);
+    const hasStock = await SiteRepository.hasStock(id);
+    if (hasStock) throw ApiError.conflict('Impossible de supprimer un site avec du stock');
+    await SiteRepository.softDelete(id);
   }
-
 }
 
 module.exports = SiteService;
