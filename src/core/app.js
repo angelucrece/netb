@@ -52,6 +52,7 @@ app.use('/api/v1/sales',      require('../modules/sales/SaleRoute'));
 app.use('/api/v1/deliveries', require('../modules/deliveries/DeliveryRoute'));
 app.use('/api/v1/invoices',   require('../modules/invoices/InvoiceRoute'));
 app.use('/api/v1/payments',   require('../modules/payments/PaymentRoute'));
+app.use('/api/v1/receipts',   require('../modules/receipts/ReceiptRoute'));
 app.use('/api/v1/cash',       require('../modules/cash/CashRoute'));
 app.use('/api/v1/stocks',     require('../modules/stocks/StockRoute'));
 app.use('/api/v1/movements',      require('../modules/stockMovement/StockMovementRoute'));

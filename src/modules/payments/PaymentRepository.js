@@ -8,8 +8,8 @@ class PaymentRepository {
     const { rows } = await runner(client).query(
       `INSERT INTO payments
         (invoice_id, sale_order_id, cash_session_id, amount, mode, type,
-         reference, notes, received_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         reference, notes, received_by, amount_received, amount_refunded)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING id`,
       [
         data.invoice_id || null,
@@ -21,6 +21,8 @@ class PaymentRepository {
         data.reference || null,
         data.notes || null,
         data.received_by || null,
+        data.amount_received ?? data.amount,
+        data.amount_refunded || 0,
       ]
     );
     return rows[0].id;

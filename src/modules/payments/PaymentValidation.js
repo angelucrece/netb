@@ -2,11 +2,15 @@ const Joi = require('joi');
 
 const manualPaymentSchema = Joi.object({
   amount: Joi.number().positive().required(),
+  amount_received: Joi.number().positive().optional(),
+  amount_refunded: Joi.number().min(0).optional(),
   mode: Joi.string().valid('cash', 'orange_money', 'mtn_money', 'card', 'bank_transfer', 'cheque', 'credit').required(),
   type: Joi.string().valid('deposit', 'balance', 'full', 'invoice').default('invoice'),
   reference: Joi.string().max(100).optional().allow('', null),
   cash_session_id: Joi.number().integer().positive().optional().allow(null),
   notes: Joi.string().max(1000).optional().allow('', null),
+  client_signature: Joi.string().max(5000).optional().allow('', null),
+  cashier_signature: Joi.string().max(5000).optional().allow('', null),
 });
 
 const externalPaymentSchema = Joi.object({

@@ -1,6 +1,7 @@
 const PaymentRepository = require('./PaymentRepository');
 const InvoiceRepository = require('../invoices/InvoiceRepository');
 const CashRepository = require('../cash/CashRepository');
+const ReceiptService = require('../receipts/ReceiptService');
 const ApiError = require('../../utils/ApiError');
 const { logAction } = require('../../utils/auditLog');
 const db = require('../../config/database');
@@ -20,11 +21,38 @@ class PaymentService {
     }
   }
 
+  // Cette fonction separe le montant impute a la facture du montant donne par le client.
+  // Exemple: facture 8 000, billet recu 10 000 => amount=8 000, amount_received=10 000,
+  // amount_refunded=2 000. On garde ces valeurs dans le paiement puis dans le recu.
+  static normalizeTenderedAmounts(data) {
+    const amount = Number(data.amount);
+    const amountReceived = data.amount_received === undefined || data.amount_received === null
+      ? amount
+      : Number(data.amount_received);
+    const expectedRefund = Number((amountReceived - amount).toFixed(2));
+    const amountRefunded = data.amount_refunded === undefined || data.amount_refunded === null
+      ? expectedRefund
+      : Number(data.amount_refunded);
+
+    if (amountReceived + 0.001 < amount) {
+      throw ApiError.badRequest('Le montant recu ne peut pas etre inferieur au montant a payer');
+    }
+    if (amountRefunded < 0) {
+      throw ApiError.badRequest('Le montant rembourse ne peut pas etre negatif');
+    }
+    if (Math.abs(amountRefunded - expectedRefund) > 0.001) {
+      throw ApiError.badRequest('Le montant rembourse doit correspondre au trop-percu');
+    }
+
+    return { amount, amount_received: amountReceived, amount_refunded: amountRefunded };
+  }
+
   // Cette fonction enregistre un paiement deja confirme au comptoir ou par preuve externe.
   static async registerManual(invoiceId, data, user, ip) {
     const invoice = await InvoiceRepository.findById(invoiceId);
     if (!invoice) throw ApiError.notFound('Facture introuvable');
     this.ensurePayable(invoice, data.amount);
+    const tendered = this.normalizeTenderedAmounts(data);
 
     let cashSessionId = data.cash_session_id || null;
     if (!cashSessionId && ['cash', 'orange_money', 'mtn_money', 'card'].includes(data.mode)) {
@@ -34,17 +62,23 @@ class PaymentService {
     }
 
     const paymentId = await this.applyConfirmedPayment(invoice, {
-      amount: Number(data.amount),
+      amount: tendered.amount,
+      amount_received: tendered.amount_received,
+      amount_refunded: tendered.amount_refunded,
       mode: data.mode,
       type: data.type || 'invoice',
       reference: data.reference,
       notes: data.notes,
       cash_session_id: cashSessionId,
       received_by: user.id,
+      client_signature: data.client_signature,
+      cashier_signature: data.cashier_signature,
     });
 
     await logAction({ userId: user.id, action: 'REGISTER_PAYMENT', entityType: 'payment', entityId: paymentId, newValue: data, ip });
-    return InvoiceRepository.findById(invoiceId);
+    const updatedInvoice = await InvoiceRepository.findById(invoiceId);
+    const receipt = await ReceiptService.getByPaymentId(paymentId);
+    return { ...updatedInvoice, receipt };
   }
 
   // Cette fonction initialise un vrai paiement externe chez Stripe, MTN MoMo ou Orange Money.
@@ -89,14 +123,17 @@ class PaymentService {
 
     if (updated.status === 'succeeded') {
       const invoice = await InvoiceRepository.findById(transaction.invoice_id);
-      await this.applyConfirmedPayment(invoice, {
+      const paymentId = await this.applyConfirmedPayment(invoice, {
         amount: Number(transaction.amount),
+        amount_received: Number(transaction.amount),
+        amount_refunded: 0,
         mode: transaction.mode,
         type: transaction.type || 'invoice',
         reference: transaction.provider_reference,
         notes: `Paiement ${transaction.provider}`,
         received_by: user.id,
       });
+      updated.receipt = await ReceiptService.getByPaymentId(paymentId);
     }
 
     await logAction({ userId: user.id, action: 'REFRESH_EXTERNAL_PAYMENT', entityType: 'payment_transaction', entityId: transaction.id, newValue: { status: updated.status }, ip });
@@ -113,6 +150,8 @@ class PaymentService {
         sale_order_id: invoice.sale_order_id,
         cash_session_id: data.cash_session_id || null,
         amount: data.amount,
+        amount_received: data.amount_received ?? data.amount,
+        amount_refunded: data.amount_refunded || 0,
         mode: data.mode,
         type: data.type || 'invoice',
         reference: data.reference,
@@ -128,6 +167,10 @@ class PaymentService {
 
       await InvoiceRepository.updatePayment(invoice.id, newPaid, invoiceStatus, client);
       await PaymentRepository.updateSalePayment(invoice.sale_order_id, salePaymentStatus, saleStatus, client);
+      await ReceiptService.generateForPayment(paymentId, {
+        client_signature: data.client_signature,
+        cashier_signature: data.cashier_signature,
+      }, client);
       return paymentId;
     });
   }
