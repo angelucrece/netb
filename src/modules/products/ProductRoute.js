@@ -5,6 +5,7 @@ const { authenticate, authorize } = require('../../middleware/auth');
 const { validate } = require('../../middleware/validation');
 const { productSchema, variantsSchema } = require('./ProductValidation');
 const { upload } = require('../../config/upload');
+const MANAGE_CATALOG = authorize('admin','operator_stock','site_manager');
 
 /**
  * @swagger
@@ -22,26 +23,26 @@ router.get('/:id', authenticate, controller.getById);
 router.get('/:id/qrcode', authenticate, controller.getQrCode);
 
 router.post('/',
-  authenticate, authorize('admin'),
+  authenticate, MANAGE_CATALOG,
   upload.single('photo'),
   validate(productSchema),
   controller.create
 );
 
 router.put('/:id',
-  authenticate, authorize('admin'),
+  authenticate, MANAGE_CATALOG,
   validate(productSchema),
   controller.update
 );
 
 router.patch('/:id/photo',
-  authenticate, authorize('admin'),
+  authenticate, MANAGE_CATALOG,
   upload.single('photo'),
   controller.updatePhoto
 );
 
 router.put('/:id/variants',
-  authenticate, authorize('admin'),
+  authenticate, MANAGE_CATALOG,
   validate(variantsSchema),
   controller.updateVariants
 );

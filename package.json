@@ -11,22 +11,34 @@
     "start": "node  src/core/server.js",
     "dev": "nodemon src/core/server.js"
   },
+  "jest": {
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  },
   "dependencies": {
+    "@swc/helpers": "^0.5.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
     "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "logger": "^0.0.1",
+    "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "path": "^0.12.7",
+    "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
+    "qrcode": "^1.5.4",
     "sequelize": "^6.37.8",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tslib": "^2.6.2",
     "winston": "^3.19.0"
   },
   "devDependencies": {

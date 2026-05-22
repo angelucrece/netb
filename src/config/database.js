@@ -62,6 +62,7 @@ const initializeDatabase = async () => {
 
     if (check.rows[0].exists) {
       logger.info('[DB] Base déjà initialisée');
+      await runMigrations();
       return;
     }
 
@@ -78,6 +79,7 @@ const initializeDatabase = async () => {
     logger.info('[DB] Schéma créé');
 
     await pool.query(seedSQL);
+    await runMigrations();
     logger.info('[DB] Données initiales insérées (rôles + comptes de test)');
 
   } catch (err) {
@@ -89,6 +91,44 @@ const initializeDatabase = async () => {
 /**
  * Se connecte à la DB système "postgres" pour créer la DB cible si absente.
  */
+const runMigrations = async () => {
+  const migrationsDir = path.join(__dirname, '../db/migrations');
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      name VARCHAR(255) PRIMARY KEY,
+      executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  if (!fs.existsSync(migrationsDir)) return;
+
+  const files = fs.readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
+
+  for (const file of files) {
+    const applied = await pool.query(
+      'SELECT 1 FROM schema_migrations WHERE name = $1',
+      [file]
+    );
+    if (applied.rowCount > 0) continue;
+
+    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    try {
+      await pool.query('BEGIN');
+      await pool.query(sql);
+      await pool.query('INSERT INTO schema_migrations (name) VALUES ($1)', [file]);
+      await pool.query('COMMIT');
+      logger.info('[DB] Migration appliquee', { file });
+    } catch (err) {
+      await pool.query('ROLLBACK');
+      logger.error('[DB] Erreur migration', { file, error: err.message });
+      throw err;
+    }
+  }
+};
+
 const ensureDatabaseExists = async () => {
   const dbName = process.env.DB_NAME || 'nethastock';
 

@@ -11,8 +11,10 @@ const spec = {
   security: [{ bearerAuth: [] }],
   tags: [
     { name: 'Auth' }, { name: 'Roles' }, { name: 'Sites' }, { name: 'Users' },
-    { name: 'Categories' }, { name: 'Products' }, { name: 'Stocks' },
-    { name: 'Movements' }, { name: 'Inventory' }, { name: 'Documents' },
+    { name: 'Categories' }, { name: 'Products' }, { name: 'Suppliers' },
+    { name: 'Clients' }, { name: 'Purchases' }, { name: 'Sales' },
+    { name: 'Deliveries' }, { name: 'Invoices' }, { name: 'Cash' },
+    { name: 'Stocks' }, { name: 'Movements' }, { name: 'Inventory' }, { name: 'Documents' },
     { name: 'Reports' }, { name: 'Notifications' }, { name: 'AuditLogs' },
   ],
   paths: {
@@ -78,6 +80,66 @@ const spec = {
     '/api/v1/products/{id}/qrcode':   { get:   { tags:['Products'], summary:'QR Code base64', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
     '/api/v1/products/{id}/photo':    { patch: { tags:['Products'], summary:'Upload photo (admin)', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'multipart/form-data':{ schema:{ type:'object', properties:{ photo:{type:'string',format:'binary'} } } } } }, responses:{ 200:{description:'OK'} } } },
     '/api/v1/products/{id}/variants': { put:   { tags:['Products'], summary:'Gerer variantes (admin)', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['variants'], properties:{ variants:{ type:'array', items:{ type:'object', properties:{ type:{type:'string',enum:['taille','couleur','modele']}, value:{type:'string'}, sku_suffix:{type:'string'} } } } } } } } }, responses:{ 200:{description:'OK'} } } },
+
+    // SUPPLIERS
+    '/api/v1/suppliers': {
+      get:  { tags:['Suppliers'], summary:'Liste fournisseurs', parameters:[{in:'query',name:'search',schema:{type:'string'}},{in:'query',name:'active',schema:{type:'boolean'}}], responses:{ 200:{description:'OK'} } },
+      post: { tags:['Suppliers'], summary:'Creer fournisseur', requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['name'], properties:{ name:{type:'string'}, contact_name:{type:'string'}, email:{type:'string'}, phone:{type:'string'}, city:{type:'string'} } } } } }, responses:{ 201:{description:'Cree'} } },
+    },
+    '/api/v1/suppliers/{id}': {
+      get:    { tags:['Suppliers'], summary:'Detail fournisseur', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } },
+      put:    { tags:['Suppliers'], summary:'Modifier fournisseur', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object' } } } }, responses:{ 200:{description:'OK'} } },
+      delete: { tags:['Suppliers'], summary:'Desactiver fournisseur', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } },
+    },
+    '/api/v1/suppliers/{id}/toggle': { patch: { tags:['Suppliers'], summary:'Activer/desactiver fournisseur', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['active'], properties:{ active:{type:'boolean'} } } } } }, responses:{ 200:{description:'OK'} } } },
+
+    // CLIENTS
+    '/api/v1/clients': {
+      get:  { tags:['Clients'], summary:'Liste clients', parameters:[{in:'query',name:'type',schema:{type:'string',enum:['company','occasional']}},{in:'query',name:'search',schema:{type:'string'}},{in:'query',name:'active',schema:{type:'boolean'}}], responses:{ 200:{description:'OK'} } },
+      post: { tags:['Clients'], summary:'Creer client', requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['name'], properties:{ type:{type:'string',enum:['company','occasional']}, name:{type:'string'}, contact_name:{type:'string'}, phone:{type:'string'}, payment_terms_days:{type:'integer'}, discount_rate:{type:'number'} } } } } }, responses:{ 201:{description:'Cree'} } },
+    },
+    '/api/v1/clients/{id}': {
+      get:    { tags:['Clients'], summary:'Detail client', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } },
+      put:    { tags:['Clients'], summary:'Modifier client', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object' } } } }, responses:{ 200:{description:'OK'} } },
+      delete: { tags:['Clients'], summary:'Desactiver client', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } },
+    },
+    '/api/v1/clients/{id}/toggle': { patch: { tags:['Clients'], summary:'Activer/desactiver client', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['active'], properties:{ active:{type:'boolean'} } } } } }, responses:{ 200:{description:'OK'} } } },
+
+    // PURCHASES
+    '/api/v1/purchases': {
+      get:  { tags:['Purchases'], summary:'Liste commandes achat', parameters:[{in:'query',name:'supplier_id',schema:{type:'integer'}},{in:'query',name:'site_id',schema:{type:'integer'}},{in:'query',name:'status',schema:{type:'string'}}], responses:{ 200:{description:'OK'} } },
+      post: { tags:['Purchases'], summary:'Creer commande achat', requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['site_id','items'], properties:{ supplier_id:{type:'integer'}, site_id:{type:'integer'}, reference:{type:'string'}, items:{type:'array',items:{type:'object'}} } } } } }, responses:{ 201:{description:'Cree'} } },
+    },
+    '/api/v1/purchases/{id}':         { get:   { tags:['Purchases'], summary:'Detail commande achat', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/purchases/{id}/order':   { patch: { tags:['Purchases'], summary:'Marquer comme commandee', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/purchases/{id}/receive': { post:  { tags:['Purchases'], summary:'Receptionner et mettre a jour le stock', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ content:{ 'application/json':{ schema:{ type:'object', properties:{ notes:{type:'string'}, items:{type:'array',items:{type:'object'}} } } } } }, responses:{ 200:{description:'OK'}, 400:{description:'Quantite invalide'} } } },
+    '/api/v1/purchases/{id}/cancel':  { patch: { tags:['Purchases'], summary:'Annuler commande achat', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+
+    // SALES / DELIVERIES / INVOICES
+    '/api/v1/sales': {
+      get:  { tags:['Sales'], summary:'Liste ventes', parameters:[{in:'query',name:'client_id',schema:{type:'integer'}},{in:'query',name:'site_id',schema:{type:'integer'}},{in:'query',name:'status',schema:{type:'string'}},{in:'query',name:'payment_status',schema:{type:'string'}},{in:'query',name:'channel',schema:{type:'string'}}], responses:{ 200:{description:'OK'} } },
+      post: { tags:['Sales'], summary:'Creer vente', requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['site_id','items'], properties:{ client_id:{type:'integer'}, site_id:{type:'integer'}, channel:{type:'string',enum:['company','occasional','store']}, delivery_required:{type:'boolean'}, items:{type:'array',items:{type:'object'}} } } } } }, responses:{ 201:{description:'Cree'} } },
+    },
+    '/api/v1/sales/{id}':          { get:   { tags:['Sales'], summary:'Detail vente', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/{id}/confirm':  { post:  { tags:['Sales'], summary:'Confirmer vente et sortir le stock', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'}, 400:{description:'Stock insuffisant'} } } },
+    '/api/v1/sales/{id}/delivery': { post:  { tags:['Deliveries'], summary:'Creer bon de livraison', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ content:{ 'application/json':{ schema:{ type:'object' } } } }, responses:{ 201:{description:'Cree'} } } },
+    '/api/v1/sales/{id}/invoice':  { post:  { tags:['Invoices'], summary:'Emettre facture', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 201:{description:'Cree'} } } },
+    '/api/v1/sales/{id}/cancel':   { patch: { tags:['Sales'], summary:'Annuler vente avant facturation', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/deliveries':                 { get:   { tags:['Deliveries'], summary:'Liste livraisons', responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/deliveries/{id}':            { get:   { tags:['Deliveries'], summary:'Detail livraison', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/deliveries/{id}/start':      { patch: { tags:['Deliveries'], summary:'Demarrer livraison', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/deliveries/{id}/delivered':  { patch: { tags:['Deliveries'], summary:'Valider livraison', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/invoices':                   { get:   { tags:['Invoices'], summary:'Liste factures', responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/invoices/{id}':              { get:   { tags:['Invoices'], summary:'Detail facture', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/sales/invoices/{id}/payments':     { post:  { tags:['Invoices'], summary:'Enregistrer paiement', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['amount','mode'], properties:{ amount:{type:'number'}, mode:{type:'string',enum:['cash','orange_money','mtn_money','card','bank_transfer','cheque','credit']}, type:{type:'string',enum:['deposit','balance','full','invoice']}, reference:{type:'string'} } } } } }, responses:{ 200:{description:'OK'} } } },
+
+    // CASH
+    '/api/v1/cash/payments':         { get:  { tags:['Cash'], summary:'Liste paiements', responses:{ 200:{description:'OK'} } } },
+    '/api/v1/cash/sessions':         { get:  { tags:['Cash'], summary:'Liste sessions de caisse', responses:{ 200:{description:'OK'} } } },
+    '/api/v1/cash/sessions/current': { get:  { tags:['Cash'], summary:'Session ouverte du caissier', responses:{ 200:{description:'OK'} } } },
+    '/api/v1/cash/sessions/open':    { post: { tags:['Cash'], summary:'Ouvrir caisse', requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', properties:{ site_id:{type:'integer'}, opening_balance:{type:'number'}, notes:{type:'string'} } } } } }, responses:{ 201:{description:'Cree'} } } },
+    '/api/v1/cash/sessions/{id}':    { get:  { tags:['Cash'], summary:'Detail session de caisse', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], responses:{ 200:{description:'OK'} } } },
+    '/api/v1/cash/sessions/{id}/close': { post: { tags:['Cash'], summary:'Fermer caisse', parameters:[{in:'path',name:'id',required:true,schema:{type:'integer'}}], requestBody:{ required:true, content:{ 'application/json':{ schema:{ type:'object', required:['closing_balance'], properties:{ closing_balance:{type:'number'}, notes:{type:'string'} } } } } }, responses:{ 200:{description:'OK'} } } },
 
     // STOCKS
     '/api/v1/stocks':                      { get:  { tags:['Stocks'], summary:'Stock par site', parameters:[{in:'query',name:'site_id',schema:{type:'integer'}},{in:'query',name:'product_id',schema:{type:'integer'}},{in:'query',name:'alert',schema:{type:'boolean'}}], responses:{ 200:{description:'OK'} } } },

@@ -24,6 +24,11 @@ class StockDocumentService {
   }
 
   static async create(data, userId) {
+    // Document de stock manuel :
+    // - reception  : entree de marchandises dans un site
+    // - sortie     : sortie de marchandises d'un site
+    // - transfert  : deplacement d'un site source vers un site destination
+    // Le document est cree en brouillon. Le stock ne change qu'a la validation.
     const id = await StockDocumentRepository.create({ ...data, created_by: userId });
     await StockDocumentRepository.addItems(id, data.items);
     await logAction({ userId, action: 'CREATE_DOCUMENT', entityType: 'stock_document', entityId: id });
@@ -35,6 +40,10 @@ class StockDocumentService {
     const doc = await this.getById(id);
     if (doc.status === 'validated') throw ApiError.conflict('Document déjà validé');
 
+    // Validation du bon :
+    // c'est ici que le document devient reel pour le stock. Les receptions
+    // ajoutent, les sorties retirent, les transferts retirent du site source et
+    // ajoutent au site destination.
     await db.transaction(async (client) => {
       for (const item of doc.items) {
         if (doc.type === 'reception') {

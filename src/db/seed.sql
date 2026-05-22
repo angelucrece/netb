@@ -11,6 +11,12 @@ INSERT INTO roles (name, label, description, level) VALUES
   ('viewer',         'Lecteur',           'Consultation uniquement',                    5),
   ('decision_maker', 'Décideur',          'Accès aux rapports et tableaux de bord',     6),
   ('accountant',     'Comptable',         'Accès aux données financières et exports',   7)
+  ,
+  ('buyer',          'Responsable achats','Gestion des fournisseurs et commandes achat', 8),
+  ('commercial',     'Commercial',        'Gestion des clients et ventes',               9),
+  ('cashier',        'Caissier',          'Encaissements et sessions de caisse',         10),
+  ('delivery_agent', 'Livreur',           'Preparation et validation des livraisons',    11),
+  ('maintenance',    'Charge de maintenance', 'Installation, support technique et disponibilite', 12)
 ON CONFLICT (name) DO NOTHING;
 
 -- ── SITE PAR DÉFAUT ────────────────────────────────────────
@@ -32,6 +38,11 @@ DECLARE
   v_viewer_role_id     INTEGER;
   v_decision_role_id   INTEGER;
   v_accountant_role_id INTEGER;
+  v_buyer_role_id      INTEGER;
+  v_commercial_role_id INTEGER;
+  v_cashier_role_id    INTEGER;
+  v_delivery_role_id   INTEGER;
+  v_maintenance_role_id INTEGER;
   v_site_id            INTEGER;
   v_hash               TEXT := '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2.';
 BEGIN
@@ -42,6 +53,11 @@ BEGIN
   SELECT id INTO v_viewer_role_id     FROM roles WHERE name = 'viewer';
   SELECT id INTO v_decision_role_id   FROM roles WHERE name = 'decision_maker';
   SELECT id INTO v_accountant_role_id FROM roles WHERE name = 'accountant';
+  SELECT id INTO v_buyer_role_id      FROM roles WHERE name = 'buyer';
+  SELECT id INTO v_commercial_role_id FROM roles WHERE name = 'commercial';
+  SELECT id INTO v_cashier_role_id    FROM roles WHERE name = 'cashier';
+  SELECT id INTO v_delivery_role_id   FROM roles WHERE name = 'delivery_agent';
+  SELECT id INTO v_maintenance_role_id FROM roles WHERE name = 'maintenance';
   SELECT id INTO v_site_id            FROM sites WHERE name = 'Siège Principal' LIMIT 1;
 
   INSERT INTO users (email, password_hash, first_name, last_name, role_id, site_id, active) VALUES
@@ -52,6 +68,11 @@ BEGIN
     ('manager@nethastock.com',    v_hash, 'Marie',   'Manager',    v_manager_role_id,    v_site_id, TRUE),
     ('viewer@nethastock.com',     v_hash, 'Paul',    'Viewer',     v_viewer_role_id,     v_site_id, TRUE),
     ('decision@nethastock.com',   v_hash, 'Alice',   'Décideur',   v_decision_role_id,   v_site_id, TRUE),
-    ('accountant@nethastock.com', v_hash, 'Bob',     'Comptable',  v_accountant_role_id, v_site_id, TRUE)
+    ('accountant@nethastock.com', v_hash, 'Bob',     'Comptable',  v_accountant_role_id, v_site_id, TRUE),
+    ('buyer@nethastock.com',      v_hash, 'Brice',   'Achats',     v_buyer_role_id,      v_site_id, TRUE),
+    ('commercial@nethastock.com', v_hash, 'Carine',  'Vente',      v_commercial_role_id, v_site_id, TRUE),
+    ('cashier@nethastock.com',    v_hash, 'Claude',  'Caisse',     v_cashier_role_id,    v_site_id, TRUE),
+    ('delivery@nethastock.com',   v_hash, 'Dany',    'Livraison',  v_delivery_role_id,   v_site_id, TRUE),
+    ('maintenance@nethastock.com', v_hash, 'Marc',   'Support',    v_maintenance_role_id, v_site_id, TRUE)
   ON CONFLICT (email) DO NOTHING;
 END $$;

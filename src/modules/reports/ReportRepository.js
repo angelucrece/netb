@@ -6,7 +6,7 @@ class ReportRepository {
     const cond = site_id ? 'AND ps.site_id = $1' : '';
     const vals = site_id ? [site_id] : [];
 
-    const [stockRes, alertRes, movRes] = await Promise.all([
+    const [stockRes, alertRes, movRes, salesRes, invoiceRes, paymentRes] = await Promise.all([
       db.query(
         `SELECT COUNT(DISTINCT ps.product_id)::int AS total_products,
                 COALESCE(SUM(ps.quantity),0)::int  AS total_stock,
@@ -27,12 +27,38 @@ class ReportRepository {
          WHERE created_at >= CURRENT_DATE
          ${site_id ? 'AND site_id = $1' : ''}`, vals
       ),
+      db.query(
+        `SELECT COUNT(*)::int AS today_sales,
+                COALESCE(SUM(total_amount),0)::numeric AS today_sales_amount
+         FROM sale_orders
+         WHERE created_at >= CURRENT_DATE
+           AND status <> 'cancelled'
+         ${site_id ? 'AND site_id = $1' : ''}`, vals
+      ),
+      db.query(
+        `SELECT COUNT(*)::int AS unpaid_invoices,
+                COALESCE(SUM(i.total_amount - i.paid_amount),0)::numeric AS receivables_amount
+         FROM invoices i
+         JOIN sale_orders so ON so.id = i.sale_order_id
+         WHERE i.status IN ('issued','partially_paid','overdue')
+         ${site_id ? 'AND so.site_id = $1' : ''}`, vals
+      ),
+      db.query(
+        `SELECT COALESCE(SUM(p.amount),0)::numeric AS today_payments
+         FROM payments p
+         JOIN sale_orders so ON so.id = p.sale_order_id
+         WHERE p.paid_at >= CURRENT_DATE
+         ${site_id ? 'AND so.site_id = $1' : ''}`, vals
+      ),
     ]);
 
     return {
       ...stockRes.rows[0],
       ...alertRes.rows[0],
       ...movRes.rows[0],
+      ...salesRes.rows[0],
+      ...invoiceRes.rows[0],
+      ...paymentRes.rows[0],
     };
   }
 

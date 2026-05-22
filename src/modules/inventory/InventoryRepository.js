@@ -1,7 +1,8 @@
 const db = require('../../config/database');
 
 class InventoryRepository {
-
+  //c'est quoi le mode ? c'est pour différencier les types d'inventaire ? (ex: inventaire tournant, inventaire annuel, etc.) ou c'est juste une info libre pour l'utilisateur ?
+  //une sesion ici c'est quoi? 
   // ── Sessions ────────────────────────────────────────────
   static async findSessions({ site_id, status, limit, offset }) {
     const conds = [];

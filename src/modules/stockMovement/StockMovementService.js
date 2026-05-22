@@ -30,6 +30,9 @@ class MovementService {
 
   // ── Entrée ──────────────────────────────────────────────
   static async createEntry({ product_id, site_id, quantity, motif, supplier }, userId) {
+    // Demande d'entree stock :
+    // cree un mouvement en attente. Le stock ne change pas encore; il changera
+    // lorsque le mouvement sera valide par un role autorise.
     const movement = await MovementRepository.create({
       type: 'entry', product_id, site_id, quantity, user_id: userId, motif, supplier,
     });
@@ -39,7 +42,9 @@ class MovementService {
 
   // ── Sortie ───────────────────────────────────────────────
   static async createExit({ product_id, site_id, quantity, motif }, userId) {
-    // Vérifier stock disponible
+    // Demande de sortie stock :
+    // on verifie le stock disponible avant de creer la demande, mais le stock
+    // sera retire seulement lors de la validation du mouvement.
     const stock = await StockRepository.findByProductAndSite(product_id, site_id);
     if (!stock || stock.quantity < quantity) {
       throw ApiError.badRequest('Stock insuffisant pour cette sortie');
@@ -53,6 +58,9 @@ class MovementService {
 
   // ── Transfert inter-sites (atomique) ─────────────────────
   static async createTransfer({ from_site_id, to_site_id, items, motif }, userId) {
+    // Transfert direct inter-sites :
+    // contrairement aux mouvements entree/sortie, ce transfert est applique
+    // immediatement et cree des mouvements deja valides.
     if (from_site_id === to_site_id) throw ApiError.badRequest('Sites identiques');
 
     return await db.transaction(async (client) => {
