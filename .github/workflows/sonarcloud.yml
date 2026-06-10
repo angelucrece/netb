@@ -1,6 +1,11 @@
 # ──────────────────────────────────────────────────────────────
 # NethaStock — Analyse SonarCloud
-# Déclenchée sur push vers main/develop et sur Pull Requests.
+# ──────────────────────────────────────────────────────────────
+# CONFIGURATION REQUISE (Settings > Secrets and variables > Actions) :
+#   SONAR_TOKEN     → token généré sur sonarcloud.io (My Account > Security)
+#   TEST_DB_USERNAME → utilisateur PostgreSQL de test
+#   TEST_DB_PASSWORD → mot de passe PostgreSQL de test
+#   TEST_JWT_SECRET  → secret JWT pour les tests
 # ──────────────────────────────────────────────────────────────
 name: SonarCloud Analysis
 
@@ -16,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout complet (fetch-depth=0 requis par SonarCloud pour l'historique des blame)
+      # 1. Checkout complet (fetch-depth=0 requis par SonarCloud)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -33,13 +38,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 4. Tests + couverture de code
-      #    Les résultats sont envoyés à SonarCloud via sonar.javascript.lcov.reportPaths
+      # 4. Tests + couverture
       - name: Run tests with coverage
         run: npm run test:coverage
         env:
-          NODE_ENV: test
-          # Les secrets sont injectés depuis GitHub Secrets — jamais en dur ici.
+          NODE_ENV:    test
           DB_HOST:     localhost
           DB_PORT:     5432
           DB_NAME:     nethastock_test
@@ -48,11 +51,14 @@ jobs:
           JWT_SECRET:  ${{ secrets.TEST_JWT_SECRET }}
 
       # 5. Analyse SonarCloud
+      # IMPORTANT : remplacer les deux valeurs ci-dessous par celles de votre projet SonarCloud
+      #   sonar.projectKey  → visible dans SonarCloud > votre projet > Information
+      #   sonar.organization → visible dans SonarCloud > Administration > Organization
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0   # version non dépréciée
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # Automatique GitHub Actions
-          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}    # À créer dans Settings > Secrets
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=angelucrece_netb2
