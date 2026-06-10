@@ -2,7 +2,7 @@
 // Gère les logs application, erreurs et debug
 
 const winston = require('winston');
-const path = require('path');
+const path = require('node:path');
 
 // Configuration des niveaux de log personnalisés
 const logLevels = {
@@ -82,7 +82,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Création du dossier logs s'il n'existe pas
-const fs = require('fs');
+const fs = require('node:fs');
 const logDir = path.join(__dirname, '../logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });

@@ -1,6 +1,8 @@
+
 const QRCode    = require('qrcode');
 const path      = require('path');
 const fs        = require('fs');
+const crypto    = require('crypto'); // CSPRNG natif Node.js
 const ProductRepository = require('./ProductRepository');
 const ApiError  = require('../../utils/ApiError');
 const paginate  = require('../../utils/paginate');
@@ -12,9 +14,11 @@ const QR_DIR = path.join(__dirname, '../../../uploads/qrcodes');
 if (!fs.existsSync(QR_DIR)) fs.mkdirSync(QR_DIR, { recursive: true });
 
 // Génère un SKU unique : REF-YYYY-XXXXXX
+// crypto.randomBytes : CSPRNG natif — résistant à la prédiction (recommandé par SonarCloud)
 const generateSku = () => {
   const year = new Date().getFullYear();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // 3 octets → 6 caractères base36 en majuscules, espace de 16M+ valeurs
+  const rand = crypto.randomBytes(3).toString('hex').toUpperCase();
   return `REF-${year}-${rand}`;
 };
 

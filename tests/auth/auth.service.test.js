@@ -10,7 +10,7 @@ jest.mock('jsonwebtoken');
 const db      = require('../../src/config/database');
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
-const crypto  = require('crypto');
+const crypto  = require('node:crypto');
 
 // Charger le service APRÈS les mocks
 const AuthService = require('../../src/modules/auth/AuthService');
@@ -19,7 +19,7 @@ const AuthService = require('../../src/modules/auth/AuthService');
 const mockUser = {
   id: 1,
   email: 'naelle@nethastock.com',
-  password_hash: '$2b$12$hashed',
+  password_hash: '$2b$12$hashed', // NOSONAR: valeur mock pour test unitaire
   first_name: 'Naelle',
   last_name: 'Admin',
   active: true,

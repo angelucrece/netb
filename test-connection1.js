@@ -1,3 +1,4 @@
+
 // init-db.js
 // ============================================================
 // NethaStock - Initialisation PostgreSQL
@@ -276,8 +277,8 @@ DECLARE
   v_accountant_role_id INTEGER;
   v_site_id            INTEGER;
 
-  v_hash TEXT :=
-  '$2b$12$UGhNd45zSI8OjfAmT.sH5eICnyz4r9JihwjNAtInRE50texSNwU3e';
+  -- Sécurité : aucun hash hardcodé — comptes créés inactifs (active=FALSE).
+  -- Activer via : SEED_PASSWORD=xxx node scripts/reset-test-passwords.js
 BEGIN
 
   SELECT id INTO v_admin_role_id
@@ -316,14 +317,14 @@ BEGIN
     active
   )
   VALUES
-    ('naelle@nethastock.com',     v_hash, 'Naelle', 'Admin',      v_admin_role_id,      v_site_id, TRUE),
-    ('admin@nethastock.com',      v_hash, 'Super',  'Admin',      v_admin_role_id,      v_site_id, TRUE),
-    ('operator@nethastock.com',   v_hash, 'Op',     'Stock',      v_operator_role_id,   v_site_id, TRUE),
-    ('controller@nethastock.com', v_hash, 'Jean',   'Contrôleur', v_controller_role_id, v_site_id, TRUE),
-    ('manager@nethastock.com',    v_hash, 'Marie',  'Manager',    v_manager_role_id,    v_site_id, TRUE),
-    ('viewer@nethastock.com',     v_hash, 'Paul',   'Viewer',     v_viewer_role_id,     v_site_id, TRUE),
-    ('decision@nethastock.com',   v_hash, 'Alice',  'Décideur',   v_decision_role_id,   v_site_id, TRUE),
-    ('accountant@nethastock.com', v_hash, 'Bob',    'Comptable',  v_accountant_role_id, v_site_id, TRUE)
+    ('naelle@nethastock.com',     NULL,   'Naelle', 'Admin',      v_admin_role_id,      v_site_id, FALSE),
+    ('admin@nethastock.com',      NULL,   'Super',  'Admin',      v_admin_role_id,      v_site_id, FALSE),
+    ('operator@nethastock.com',   NULL,   'Op',     'Stock',      v_operator_role_id,   v_site_id, FALSE),
+    ('controller@nethastock.com', NULL,   'Jean',   'Contrôleur', v_controller_role_id, v_site_id, FALSE),
+    ('manager@nethastock.com',    NULL,   'Marie',  'Manager',    v_manager_role_id,    v_site_id, FALSE),
+    ('viewer@nethastock.com',     NULL,   'Paul',   'Viewer',     v_viewer_role_id,     v_site_id, FALSE),
+    ('decision@nethastock.com',   NULL,   'Alice',  'Décideur',   v_decision_role_id,   v_site_id, FALSE),
+    ('accountant@nethastock.com', NULL,   'Bob',    'Comptable',  v_accountant_role_id, v_site_id, FALSE)
 
   ON CONFLICT (email) DO NOTHING;
 

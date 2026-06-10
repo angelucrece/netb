@@ -7,8 +7,8 @@ const { ipKeyGenerator } = require('express-rate-limit');
 
 // Rate limiter général
 const generalLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_REQUESTS) || 100,
+  windowMs: Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number.parseInt(process.env.RATE_LIMIT_REQUESTS) || 100,
   standardHeaders: true,
   legacyHeaders: false,
   // keyGenerator: (req) => req.ip || req.connection.remoteAddress,

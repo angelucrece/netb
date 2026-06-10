@@ -1,21 +1,17 @@
-class StockDocument {
-  constructor({
-    id,
-    type,
-    site_id,
-    destination_site_id,
-    status,
-    user_id,
-    created_at
-  }) {
-    this.id = id;
-    this.type = type;
-    this.siteId = site_id;
-    this.destinationSiteId = destination_site_id;
-    this.status = status;
-    this.userId = user_id;
-    this.createdAt = created_at;
-  }
-}
+/**
+ * StockDocumentModel — fabrique d'objet document de stock (plain object).
+ * Remplace la classe avec constructeur unique (SonarCloud S2094).
+ */
+const createStockDocument = ({
+  id, type, site_id, destination_site_id, status, user_id, created_at
+}) => ({
+  id,
+  type,
+  siteId:             site_id,
+  destinationSiteId:  destination_site_id,
+  status,
+  userId:             user_id,
+  createdAt:          created_at,
+});
 
-module.exports = StockDocument;
+module.exports = createStockDocument;

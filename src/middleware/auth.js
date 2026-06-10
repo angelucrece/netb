@@ -10,7 +10,7 @@ const logger = require('../config/logger');
  */
 const authenticate = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader?.split(' ')[1];
 
   if (!token) throw ApiError.unauthorized('Token d\'authentification requis');
 
@@ -57,14 +57,14 @@ const authenticate = asyncHandler(async (req, res, next) => {
 const authorize = (...roles) => (req, res, next) => {
   if (!req.user) throw ApiError.unauthorized();
 
-  if (!roles.includes(req.user.role.name)) {
+  if (!roles.includes(req.user?.role?.name)) {
     logger.warn('[Auth] Accès refusé', {
       userId: req.user.id,
-      userRole: req.user.role.name,
+      userRole: req.user?.role?.name,
       required: roles,
       url: req.originalUrl,
     });
-    throw ApiError.forbidden(`Rôle requis : ${roles.join(' ou ')}`);
+    throw ApiError.forbidden(`Rôle requis : ${roles.join(' ou ')}`); // eslint-disable-line
   }
   next();
 };

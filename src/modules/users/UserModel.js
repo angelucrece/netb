@@ -1,34 +1,21 @@
-
-// Importation des modules nécessaires
-const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../../config/database');
-const Role = require('../roles/RoleModel');
-
 /**
- * Modèle User
+ * UserModel — fabrique d'objet utilisateur (plain object).
+ * Remplace la classe avec constructeur unique (SonarCloud S2094).
+ * Suppression des imports Sequelize inutilisés.
  */
-class User {
-  constructor({
-    id,
-    email,
-    first_name,
-    last_name,
-    role,
-    active,
-    created_at,
-    last_login,
-    site
-  }) {
-    this.id = id;
-    this.email = email;
-    this.firstName = first_name;
-    this.lastName = last_name;
-    this.role = role; // objet Role
-    this.active = active;
-    this.createdAt = created_at;
-    this.lastLogin = last_login;
-    this.site = site; // objet Site
-  }
-}
+const createUser = ({
+  id, email, first_name, last_name,
+  role, active, created_at, last_login, site
+}) => ({
+  id,
+  email,
+  firstName:  first_name,
+  lastName:   last_name,
+  role,
+  active,
+  createdAt:  created_at,
+  lastLogin:  last_login,
+  site,
+});
 
-module.exports = User;
+module.exports = createUser;

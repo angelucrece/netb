@@ -1,20 +1,53 @@
+# node_modules/
+# .env
+# dist/
+# coverage/
+# logs/
+# *.log
+# .DS_Store
+# .idea/
+# .vscode/
+# *.suo
+# *.ntvs*
+# *.njsproj
+
+# # Fichiers de planification interne (non destinés au dépôt)
+# backend.md
+# gitbackend.md
+# devguide.md
+
+# # Uploads locaux
+# uploads/
+
+# Dépendances
 node_modules/
+
+# Variables d'environnement – NE JAMAIS COMMITTER
 .env
-dist/
-coverage/
+.env.local
+.env.*.local
+
+# Logs
+src/logs/*.log
 logs/
 *.log
-.DS_Store
+
+# Uploads (fichiers utilisateurs)
+uploads/products/
+uploads/qrcodes/
+
+# Build
+dist/
+build/
+
+# IDE
 .idea/
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
+*.swp
 
-# Fichiers de planification interne (non destinés au dépôt)
-backend.md
-gitbackend.md
-devguide.md
+# OS
+.DS_Store
+Thumbs.db
 
-# Uploads locaux
-uploads/
+# Tests – rapports de couverture
+coverage/

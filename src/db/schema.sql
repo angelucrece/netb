@@ -5,6 +5,17 @@
 -- Extension pour UUID (optionnel, on utilise SERIAL)
 -- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ── DOMAINES (types réutilisables) ────────────────────────────
+-- Évite la duplication littérale de 'validated' (SonarCloud S1192)
+DROP DOMAIN IF EXISTS movement_status CASCADE;
+DROP DOMAIN IF EXISTS document_status CASCADE;
+
+CREATE DOMAIN movement_status AS VARCHAR(20)
+  CHECK (VALUE IN ('pending', 'validated', 'rejected'));
+
+CREATE DOMAIN document_status AS VARCHAR(20)
+  CHECK (VALUE IN ('draft', 'validated', 'cancelled'));
+
 -- ── ROLES ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS roles (
   id          SERIAL PRIMARY KEY,
@@ -111,7 +122,7 @@ CREATE TABLE IF NOT EXISTS movements (
   destination_site_id INTEGER      REFERENCES sites(id),
   quantity            INTEGER      NOT NULL CHECK (quantity > 0),
   user_id             INTEGER      REFERENCES users(id) ON DELETE SET NULL,
-  status              VARCHAR(20)  NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','validated','rejected')),
+  status              movement_status NOT NULL DEFAULT 'pending',
   motif               TEXT,
   supplier            VARCHAR(255),
   validated_by        INTEGER      REFERENCES users(id) ON DELETE SET NULL,

@@ -2,8 +2,13 @@ const db = require('../../config/database');
 
 class SiteRepository {
   static async findAll(activeOnly = true) {
-    const where = activeOnly ? 'WHERE active = true' : '';
-    const { rows } = await db.query(`SELECT * FROM sites ${where} ORDER BY name ASC`);
+    // `where` est construit exclusivement depuis un booléen interne (jamais depuis req.*).
+    // Pas d'interpolation de données utilisateur — pas de risque d'injection SQL.
+    // Utilisation d'un paramètre positionnel pour confirmer la lisibilité SonarCloud.
+    const { rows } = await db.query(
+      'SELECT * FROM sites WHERE ($1::boolean = false OR active = true) ORDER BY name ASC',
+      [activeOnly]
+    );
     return rows;
   }
 

@@ -6,8 +6,8 @@
  * @returns {{ page, limit, total, totalPages, hasNext, hasPrev, offset }}
  */
 const paginate = (page = 1, limit = 20, total = 0) => {
-  const p = Math.max(1, parseInt(page));
-  const l = Math.min(100, Math.max(1, parseInt(limit)));
+  const p = Math.max(1, Number.parseInt(page));
+  const l = Math.min(100, Math.max(1, Number.parseInt(limit)));
   const totalPages = Math.ceil(total / l);
 
   return {

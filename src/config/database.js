@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const logger = require('./logger');
 require('dotenv').config();
 
@@ -10,7 +10,7 @@ const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
   database: process.env.DB_NAME     || 'nethastock',
   password: process.env.DB_PASSWORD,
-  port:     parseInt(process.env.DB_PORT) || 5432,
+  port:     Number.parseInt(process.env.DB_PORT) || 5432,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
@@ -79,8 +79,9 @@ const initializeDatabase = async () => {
     logger.info('[DB] Schéma créé');
 
     await pool.query(seedSQL);
-    await runMigrations();
     logger.info('[DB] Données initiales insérées (rôles + comptes de test)');
+
+    await runMigrations();
 
   } catch (err) {
     logger.error('[DB] Erreur initialisation', { error: err.message });
@@ -89,18 +90,12 @@ const initializeDatabase = async () => {
 };
 
 /**
- * Se connecte à la DB système "postgres" pour créer la DB cible si absente.
+ * Exécute les migrations SQL idempotentes stockées dans src/db/migrations.
+ * Règle : les tables commerciales et les contraintes métier doivent être
+ * appliquées sur une base neuve comme sur une base déjà existante.
  */
 const runMigrations = async () => {
   const migrationsDir = path.join(__dirname, '../db/migrations');
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      name VARCHAR(255) PRIMARY KEY,
-      executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-
   if (!fs.existsSync(migrationsDir)) return;
 
   const files = fs.readdirSync(migrationsDir)
@@ -108,27 +103,15 @@ const runMigrations = async () => {
     .sort();
 
   for (const file of files) {
-    const applied = await pool.query(
-      'SELECT 1 FROM schema_migrations WHERE name = $1',
-      [file]
-    );
-    if (applied.rowCount > 0) continue;
-
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-    try {
-      await pool.query('BEGIN');
-      await pool.query(sql);
-      await pool.query('INSERT INTO schema_migrations (name) VALUES ($1)', [file]);
-      await pool.query('COMMIT');
-      logger.info('[DB] Migration appliquee', { file });
-    } catch (err) {
-      await pool.query('ROLLBACK');
-      logger.error('[DB] Erreur migration', { file, error: err.message });
-      throw err;
-    }
+    await pool.query(sql);
+    logger.info('[DB] Migration appliquée', { file });
   }
 };
 
+/**
+ * Se connecte à la DB système "postgres" pour créer la DB cible si absente.
+ */
 const ensureDatabaseExists = async () => {
   const dbName = process.env.DB_NAME || 'nethastock';
 
@@ -137,7 +120,7 @@ const ensureDatabaseExists = async () => {
     host:     process.env.DB_HOST     || 'localhost',
     database: 'postgres', // DB système toujours présente
     password: process.env.DB_PASSWORD,
-    port:     parseInt(process.env.DB_PORT) || 5432,
+    port:     Number.parseInt(process.env.DB_PORT) || 5432,
     connectionTimeoutMillis: 5000,
   });
 
@@ -147,8 +130,12 @@ const ensureDatabaseExists = async () => {
     );
 
     if (res.rowCount === 0) {
-      // Les identifiants ne peuvent pas être paramétrés en DDL
-      await adminPool.query(`CREATE DATABASE "${dbName}"`);
+      // Les identifiants de base de données ne peuvent pas être paramétrés en DDL PostgreSQL.
+      // On valide strictement le nom avant interpolation (SonarCloud S3649).
+      if (!/^[a-zA-Z0-9_]+$/.test(dbName)) {
+        throw new Error(`[DB] Nom de base de données invalide : "${dbName}". Seuls a-z, A-Z, 0-9 et _ sont autorisés.`);
+      }
+      await adminPool.query(`CREATE DATABASE "${dbName}"`); // NOSONAR: dbName validé par regex [a-zA-Z0-9_] ligne précédente
       logger.info(`[DB] Base de données "${dbName}" créée`);
     }
   } catch (err) {

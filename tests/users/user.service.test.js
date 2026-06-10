@@ -22,7 +22,7 @@ describe('UserService.createUser', () => {
       .mockResolvedValueOnce({ rows: [mockUser] })  // findById
       .mockResolvedValueOnce({ rows: [] });          // auditLog
 
-    bcrypt.hash.mockResolvedValue('$2b$12$hashed');
+    bcrypt.hash.mockResolvedValue('$2b$12$hashed'); // NOSONAR: valeur mock pour test unitaire
 
     const user = await UserService.createUser(
       { email: 'operator@nethastock.com', password: 'noutong1',
@@ -61,7 +61,7 @@ describe('UserService.getUserById', () => {
 
 describe('UserService.changePassword', () => {
   test('ancien mdp incorrect → erreur 400', async () => {
-    db.query.mockResolvedValueOnce({ rows: [{ password_hash: '$2b$12$hashed' }] });
+    db.query.mockResolvedValueOnce({ rows: [{ password_hash: '$2b$12$hashed' }] }); // NOSONAR: valeur mock pour test unitaire
     bcrypt.compare.mockResolvedValue(false);
 
     await expect(
@@ -71,11 +71,11 @@ describe('UserService.changePassword', () => {
 
   test('ancien mdp correct → mot de passe mis à jour', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [{ password_hash: '$2b$12$hashed' }] })
+      .mockResolvedValueOnce({ rows: [{ password_hash: '$2b$12$hashed' }] }) // NOSONAR: valeur mock pour test unitaire
       .mockResolvedValueOnce({ rows: [] }); // UPDATE
 
     bcrypt.compare.mockResolvedValue(true);
-    bcrypt.hash.mockResolvedValue('$2b$12$newhash');
+    bcrypt.hash.mockResolvedValue('$2b$12$newhash'); // NOSONAR: valeur mock pour test unitaire
 
     await expect(
       UserService.changePassword(2, { old_password: 'noutong1', new_password: 'newpass1' })
