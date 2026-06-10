@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const p = await ProductService.getById(parseInt(req.params.id));
+  const p = await ProductService.getById(Number.parseInt(req.params.id));
   success(res, p);
 });
 
@@ -18,7 +18,7 @@ const scan = asyncHandler(async (req, res) => {
 });
 
 const getQrCode = asyncHandler(async (req, res) => {
-  const data = await ProductService.getQrCode(parseInt(req.params.id));
+  const data = await ProductService.getQrCode(Number.parseInt(req.params.id));
   success(res, data);
 });
 
@@ -34,23 +34,23 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const p = await ProductService.update(parseInt(req.params.id), req.body, req.user.id, req.ip);
+  const p = await ProductService.update(Number.parseInt(req.params.id), req.body, req.user.id, req.ip);
   success(res, p, 'Produit mis à jour');
 });
 
 const updatePhoto = asyncHandler(async (req, res) => {
   if (!req.file) throw require('../../utils/ApiError').badRequest('Photo requise');
-  const p = await ProductService.updatePhoto(parseInt(req.params.id), req.file.path, req.user.id);
+  const p = await ProductService.updatePhoto(Number.parseInt(req.params.id), req.file.path, req.user.id);
   success(res, p, 'Photo mise à jour');
 });
 
 const updateVariants = asyncHandler(async (req, res) => {
-  const p = await ProductService.updateVariants(parseInt(req.params.id), req.body.variants, req.user.id);
+  const p = await ProductService.updateVariants(Number.parseInt(req.params.id), req.body.variants, req.user.id);
   success(res, p, 'Variantes mises à jour');
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await ProductService.delete(parseInt(req.params.id), req.user.id, req.ip);
+  await ProductService.delete(Number.parseInt(req.params.id), req.user.id, req.ip);
   success(res, null, 'Produit supprimé');
 });
 

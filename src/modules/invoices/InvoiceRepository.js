@@ -43,7 +43,7 @@ class InvoiceRepository {
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM invoices ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   // Cette fonction retrouve la derniere facture liee a une vente.

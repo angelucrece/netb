@@ -49,7 +49,7 @@ class SupplierRepository {
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM suppliers ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async findById(id) {

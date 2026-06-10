@@ -54,7 +54,7 @@ class MovementRepository {
     const { rows } = await db.query(
       `SELECT COUNT(*) FROM movements m ${where}`, vals
     );
-    return parseInt(rows[0].count);
+    return Number.parseInt(rows[0].count);
   }
 
   static async findById(id) {

@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const supplier = await SupplierService.getById(parseInt(req.params.id, 10));
+  const supplier = await SupplierService.getById(Number.parseInt(req.params.id, 10));
   success(res, supplier);
 });
 
@@ -18,17 +18,17 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const supplier = await SupplierService.update(parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
+  const supplier = await SupplierService.update(Number.parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
   success(res, supplier, 'Fournisseur mis a jour');
 });
 
 const toggle = asyncHandler(async (req, res) => {
-  const supplier = await SupplierService.toggle(parseInt(req.params.id, 10), req.body.active, req.user.id, req.ip);
+  const supplier = await SupplierService.toggle(Number.parseInt(req.params.id, 10), req.body.active, req.user.id, req.ip);
   success(res, supplier, 'Statut fournisseur mis a jour');
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await SupplierService.delete(parseInt(req.params.id, 10), req.user.id, req.ip);
+  await SupplierService.delete(Number.parseInt(req.params.id, 10), req.user.id, req.ip);
   success(res, null, 'Fournisseur desactive');
 });
 

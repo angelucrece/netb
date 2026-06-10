@@ -41,7 +41,7 @@ class PurchaseRepository {
       `SELECT COUNT(*) FROM purchase_orders po ${where}`,
       vals
     );
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async findById(id) {

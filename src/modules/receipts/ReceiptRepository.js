@@ -46,7 +46,7 @@ class ReceiptRepository {
   static async count(filters) {
     const { where, vals } = this._filters(filters);
     const { rows } = await db.query(`SELECT COUNT(*) FROM receipts r ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async findById(id) {

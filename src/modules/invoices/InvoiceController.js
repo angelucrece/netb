@@ -10,13 +10,13 @@ const getAll = asyncHandler(async (req, res) => {
 
 // Cette fonction renvoie une facture precise.
 const getById = asyncHandler(async (req, res) => {
-  const invoice = await InvoiceService.getById(parseInt(req.params.id, 10));
+  const invoice = await InvoiceService.getById(Number.parseInt(req.params.id, 10));
   success(res, invoice);
 });
 
 // Cette fonction emet une facture pour une vente.
 const issue = asyncHandler(async (req, res) => {
-  const invoice = await InvoiceService.issue(parseInt(req.params.saleId || req.params.id, 10), req.user.id, req.ip);
+  const invoice = await InvoiceService.issue(Number.parseInt(req.params.saleId || req.params.id, 10), req.user.id, req.ip);
   created(res, invoice, 'Facture emise');
 });
 

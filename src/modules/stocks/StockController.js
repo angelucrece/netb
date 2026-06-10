@@ -9,8 +9,8 @@ const getStocks = asyncHandler(async (req, res) => {
 
 const getByProductAndSite = asyncHandler(async (req, res) => {
   const stock = await StockService.getByProductAndSite(
-    parseInt(req.params.productId),
-    parseInt(req.params.siteId)
+    Number.parseInt(req.params.productId),
+    Number.parseInt(req.params.siteId)
   );
   success(res, stock);
 });

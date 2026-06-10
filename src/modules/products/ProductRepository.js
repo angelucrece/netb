@@ -45,7 +45,7 @@ class ProductRepository {
        LEFT JOIN product_stocks ps ON ps.product_id = p.id
        WHERE ${conds.join(' AND ')}`, vals
     );
-    return parseInt(rows[0].count);
+    return Number.parseInt(rows[0].count);
   }
 
   static async findById(id) {

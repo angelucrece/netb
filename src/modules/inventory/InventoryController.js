@@ -29,23 +29,23 @@ const addItem = asyncHandler(async (req, res) => {
 
 const updateItem = asyncHandler(async (req, res) => {
   const item = await InventoryService.updateItem(
-    parseInt(req.params.id), parseInt(req.params.itemId), req.body.counted_qty, req.user.id
+    Number.parseInt(req.params.id), Number.parseInt(req.params.itemId), req.body.counted_qty, req.user.id
   );
   success(res, item, 'Article mis à jour');
 });
 
 const getGaps = asyncHandler(async (req, res) => {
-  const gaps = await InventoryService.getGaps(parseInt(req.params.id));
+  const gaps = await InventoryService.getGaps(Number.parseInt(req.params.id));
   success(res, gaps);
 });
 
 const validateSession = asyncHandler(async (req, res) => {
-  const s = await InventoryService.validateSession(parseInt(req.params.id), req.user.id);
+  const s = await InventoryService.validateSession(Number.parseInt(req.params.id), req.user.id);
   success(res, s, 'Session validée et stock régularisé');
 });
 
 const closeSession = asyncHandler(async (req, res) => {
-  const s = await InventoryService.closeSession(parseInt(req.params.id), req.user.id);
+  const s = await InventoryService.closeSession(Number.parseInt(req.params.id), req.user.id);
   success(res, s, 'Session fermée');
 });
 

@@ -8,17 +8,17 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const receipt = await ReceiptService.getById(parseInt(req.params.id, 10));
+  const receipt = await ReceiptService.getById(Number.parseInt(req.params.id, 10));
   success(res, receipt);
 });
 
 const getByPaymentId = asyncHandler(async (req, res) => {
-  const receipt = await ReceiptService.getByPaymentId(parseInt(req.params.paymentId, 10));
+  const receipt = await ReceiptService.getByPaymentId(Number.parseInt(req.params.paymentId, 10));
   success(res, receipt);
 });
 
 const exportPdf = asyncHandler(async (req, res) => {
-  const receipt = await ReceiptService.getById(parseInt(req.params.id, 10));
+  const receipt = await ReceiptService.getById(Number.parseInt(req.params.id, 10));
   const buffer = await ReceiptService.renderPdf(receipt);
   const filename = `receipt-${receipt.reference}.pdf`;
 

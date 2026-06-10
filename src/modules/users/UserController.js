@@ -13,7 +13,7 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const user = await UserService.getUserById(parseInt(req.params.id));
+  const user = await UserService.getUserById(Number.parseInt(req.params.id));
   success(res, user);
 });
 
@@ -23,7 +23,7 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const user = await UserService.updateUser(parseInt(req.params.id), req.body, req.user.id, req.ip);
+  const user = await UserService.updateUser(Number.parseInt(req.params.id), req.body, req.user.id, req.ip);
   success(res, user, 'Utilisateur mis à jour');
 });
 
@@ -33,12 +33,12 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 const toggle = asyncHandler(async (req, res) => {
-  const user = await UserService.toggleUser(parseInt(req.params.id), req.body.active, req.user.id);
+  const user = await UserService.toggleUser(Number.parseInt(req.params.id), req.body.active, req.user.id);
   success(res, user, `Compte ${req.body.active ? 'activé' : 'désactivé'}`);
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await UserService.deleteUser(parseInt(req.params.id), req.user.id);
+  await UserService.deleteUser(Number.parseInt(req.params.id), req.user.id);
   success(res, null, 'Utilisateur supprimé');
 });
 

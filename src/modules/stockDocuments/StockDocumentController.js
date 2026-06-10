@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const doc = await StockDocumentService.getById(parseInt(req.params.id));
+  const doc = await StockDocumentService.getById(Number.parseInt(req.params.id));
   success(res, doc);
 });
 
@@ -18,7 +18,7 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const validate = asyncHandler(async (req, res) => {
-  const doc = await StockDocumentService.validate(parseInt(req.params.id), req.user.id);
+  const doc = await StockDocumentService.validate(Number.parseInt(req.params.id), req.user.id);
   success(res, doc, 'Document validé');
 });
 

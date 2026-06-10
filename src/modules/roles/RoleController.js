@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const role = await RoleService.getRoleById(parseInt(req.params.id));
+  const role = await RoleService.getRoleById(Number.parseInt(req.params.id));
   success(res, role);
 });
 

@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const order = await PurchaseService.getById(parseInt(req.params.id, 10));
+  const order = await PurchaseService.getById(Number.parseInt(req.params.id, 10));
   success(res, order);
 });
 
@@ -18,17 +18,17 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const markOrdered = asyncHandler(async (req, res) => {
-  const order = await PurchaseService.markOrdered(parseInt(req.params.id, 10), req.user.id, req.ip);
+  const order = await PurchaseService.markOrdered(Number.parseInt(req.params.id, 10), req.user.id, req.ip);
   success(res, order, 'Commande achat envoyee');
 });
 
 const receive = asyncHandler(async (req, res) => {
-  const order = await PurchaseService.receive(parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
+  const order = await PurchaseService.receive(Number.parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
   success(res, order, 'Reception enregistree');
 });
 
 const cancel = asyncHandler(async (req, res) => {
-  const order = await PurchaseService.cancel(parseInt(req.params.id, 10), req.body.reason, req.user.id, req.ip);
+  const order = await PurchaseService.cancel(Number.parseInt(req.params.id, 10), req.body.reason, req.user.id, req.ip);
   success(res, order, 'Commande achat annulee');
 });
 

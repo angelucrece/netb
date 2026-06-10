@@ -28,7 +28,7 @@ const getSitesStock = asyncHandler(async (req, res) => {
 });
 
 const getInventoryReport = asyncHandler(async (req, res) => {
-  const data = await ReportService.getInventoryReport(parseInt(req.params.sessionId));
+  const data = await ReportService.getInventoryReport(Number.parseInt(req.params.sessionId));
   success(res, data);
 });
 

@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const markRead = asyncHandler(async (req, res) => {
-  const n = await NotificationService.markRead(parseInt(req.params.id), req.user.id);
+  const n = await NotificationService.markRead(Number.parseInt(req.params.id), req.user.id);
   success(res, n, 'Notification lue');
 });
 
@@ -23,7 +23,7 @@ const saveFcmToken = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await NotificationService.delete(parseInt(req.params.id), req.user.id);
+  await NotificationService.delete(Number.parseInt(req.params.id), req.user.id);
   success(res, null, 'Notification supprimée');
 });
 

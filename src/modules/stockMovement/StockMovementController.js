@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const m = await MovementService.getById(parseInt(req.params.id));
+  const m = await MovementService.getById(Number.parseInt(req.params.id));
   success(res, m);
 });
 
@@ -33,13 +33,13 @@ const createTransfer = asyncHandler(async (req, res) => {
 });
 
 const validate = asyncHandler(async (req, res) => {
-  const m = await MovementService.validate(parseInt(req.params.id), req.user.id);
+  const m = await MovementService.validate(Number.parseInt(req.params.id), req.user.id);
   success(res, m, 'Mouvement validé');
 });
 
 const reject = asyncHandler(async (req, res) => {
   const m = await MovementService.reject(
-    parseInt(req.params.id), req.body.rejection_reason, req.user.id
+    Number.parseInt(req.params.id), req.body.rejection_reason, req.user.id
   );
   success(res, m, 'Mouvement rejeté');
 });

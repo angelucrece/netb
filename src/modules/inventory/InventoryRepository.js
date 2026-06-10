@@ -35,7 +35,7 @@ class InventoryRepository {
     const { rows } = await db.query(
       `SELECT COUNT(*) FROM inventory_sessions ${where}`, vals
     );
-    return parseInt(rows[0].count);
+    return Number.parseInt(rows[0].count);
   }
 
   static async findSessionById(id) {

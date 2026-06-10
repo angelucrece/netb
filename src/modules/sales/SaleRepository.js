@@ -51,7 +51,7 @@ class SaleRepository {
        ${where}`,
       vals
     );
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async findById(id) {
@@ -326,7 +326,7 @@ class SaleRepository {
     if (date_to) { conds.push(`created_at <= $${i++}`); vals.push(date_to); }
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM deliveries ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async listInvoices(filters) {
@@ -365,7 +365,7 @@ class SaleRepository {
     if (date_to) { conds.push(`created_at <= $${i++}`); vals.push(date_to); }
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM invoices ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 }
 

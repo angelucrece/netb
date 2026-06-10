@@ -33,7 +33,7 @@ class StockDocumentRepository {
     if (status)  { conds.push(`status = $${i++}`);  vals.push(status); }
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM stock_documents ${where}`, vals);
-    return parseInt(rows[0].count);
+    return Number.parseInt(rows[0].count);
   }
 
   static async findById(id) {
