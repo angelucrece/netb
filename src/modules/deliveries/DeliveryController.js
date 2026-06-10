@@ -10,25 +10,25 @@ const getAll = asyncHandler(async (req, res) => {
 
 // Cette fonction renvoie un bon de livraison precis.
 const getById = asyncHandler(async (req, res) => {
-  const delivery = await DeliveryService.getById(parseInt(req.params.id, 10));
+  const delivery = await DeliveryService.getById(Number.parseInt(req.params.id, 10));
   success(res, delivery);
 });
 
 // Cette fonction cree un bon de livraison pour une vente.
 const create = asyncHandler(async (req, res) => {
-  const sale = await DeliveryService.create(parseInt(req.params.saleId || req.params.id, 10), req.body, req.user.id, req.ip);
+  const sale = await DeliveryService.create(Number.parseInt(req.params.saleId || req.params.id, 10), req.body, req.user.id, req.ip);
   created(res, sale, 'Bon de livraison cree');
 });
 
 // Cette fonction marque le depart de la livraison.
 const start = asyncHandler(async (req, res) => {
-  const delivery = await DeliveryService.start(parseInt(req.params.id, 10), req.user.id, req.ip);
+  const delivery = await DeliveryService.start(Number.parseInt(req.params.id, 10), req.user.id, req.ip);
   success(res, delivery, 'Livraison demarree');
 });
 
 // Cette fonction valide la livraison apres controle.
 const validate = asyncHandler(async (req, res) => {
-  const delivery = await DeliveryService.validate(parseInt(req.params.id, 10), req.user.id, req.ip);
+  const delivery = await DeliveryService.validate(Number.parseInt(req.params.id, 10), req.user.id, req.ip);
   success(res, delivery, 'Livraison validee');
 });
 

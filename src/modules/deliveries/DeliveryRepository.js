@@ -40,7 +40,7 @@ class DeliveryRepository {
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM deliveries ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   // Cette fonction recupere un bon de livraison precis avec l'etat de sa vente.

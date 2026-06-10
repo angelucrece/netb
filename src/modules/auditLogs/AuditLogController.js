@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const log = await AuditLogService.getById(parseInt(req.params.id));
+  const log = await AuditLogService.getById(Number.parseInt(req.params.id));
   success(res, log);
 });
 

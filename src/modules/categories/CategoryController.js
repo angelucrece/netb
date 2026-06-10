@@ -8,7 +8,7 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const cat = await CategoryService.getById(parseInt(req.params.id));
+  const cat = await CategoryService.getById(Number.parseInt(req.params.id));
   success(res, cat);
 });
 
@@ -18,12 +18,12 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const cat = await CategoryService.update(parseInt(req.params.id), req.body, req.user.id, req.ip);
+  const cat = await CategoryService.update(Number.parseInt(req.params.id), req.body, req.user.id, req.ip);
   success(res, cat, 'Catégorie mise à jour');
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await CategoryService.delete(parseInt(req.params.id), req.user.id, req.ip);
+  await CategoryService.delete(Number.parseInt(req.params.id), req.user.id, req.ip);
   success(res, null, 'Catégorie supprimée');
 });
 

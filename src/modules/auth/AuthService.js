@@ -48,7 +48,7 @@ const login = async ({ email, password, site_id }, ip) => {
   if (!u.active) throw ApiError.unauthorized('Compte désactivé');
 
   // Vérification optionnelle du site
-  if (site_id && u.site_id !== parseInt(site_id)) {
+  if (site_id && u.site_id !== Number.parseInt(site_id)) {
     throw ApiError.unauthorized('Site de connexion incorrect');
   }
 

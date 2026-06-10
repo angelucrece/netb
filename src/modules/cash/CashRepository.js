@@ -35,7 +35,7 @@ class CashRepository {
   static async count(filters) {
     const { where, vals } = this._filters(filters);
     const { rows } = await db.query(`SELECT COUNT(*) FROM cash_sessions cs ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 
   static async findById(id) {
@@ -132,7 +132,7 @@ class CashRepository {
     if (date_to) { conds.push(`paid_at <= $${i++}`); vals.push(date_to); }
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(`SELECT COUNT(*) FROM payments ${where}`, vals);
-    return parseInt(rows[0].count, 10);
+    return Number.parseInt(rows[0].count, 10);
   }
 }
 

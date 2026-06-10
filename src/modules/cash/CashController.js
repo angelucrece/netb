@@ -8,7 +8,7 @@ const getSessions = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const session = await CashService.getById(parseInt(req.params.id, 10));
+  const session = await CashService.getById(Number.parseInt(req.params.id, 10));
   success(res, session);
 });
 
@@ -23,7 +23,7 @@ const open = asyncHandler(async (req, res) => {
 });
 
 const close = asyncHandler(async (req, res) => {
-  const session = await CashService.close(parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
+  const session = await CashService.close(Number.parseInt(req.params.id, 10), req.body, req.user.id, req.ip);
   success(res, session, 'Session de caisse fermee');
 });
 

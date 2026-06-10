@@ -33,7 +33,7 @@ class CategoryRepository {
     const { rows } = await db.query(
       `SELECT COUNT(*) FROM categories c WHERE ${conds.join(' AND ')}`, vals
     );
-    return parseInt(rows[0].count);
+    return Number.parseInt(rows[0].count);
   }
 
   static async findById(id) {

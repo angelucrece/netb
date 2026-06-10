@@ -8,7 +8,7 @@ const getSessions = asyncHandler(async (req, res) => {
 });
 
 const getSessionById = asyncHandler(async (req, res) => {
-  const s = await InventoryService.getSessionById(parseInt(req.params.id));
+  const s = await InventoryService.getSessionById(Number.parseInt(req.params.id));
   success(res, s);
 });
 
@@ -23,7 +23,7 @@ const startSession = asyncHandler(async (req, res) => {
 });
 
 const addItem = asyncHandler(async (req, res) => {
-  const item = await InventoryService.addItem(parseInt(req.params.id), req.body, req.user.id);
+  const item = await InventoryService.addItem(Number.parseInt(req.params.id), req.body, req.user.id);
   created(res, item, 'Article enregistré');
 });
 
