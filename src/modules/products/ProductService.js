@@ -1,8 +1,8 @@
 
 const QRCode    = require('qrcode');
-const path      = require('path');
-const fs        = require('fs');
-const crypto    = require('crypto'); // CSPRNG natif Node.js
+const path      = require('node:path');
+const fs        = require('node:fs');
+const crypto    = require('node:crypto'); // CSPRNG natif Node.js
 const ProductRepository = require('./ProductRepository');
 const ApiError  = require('../../utils/ApiError');
 const paginate  = require('../../utils/paginate');

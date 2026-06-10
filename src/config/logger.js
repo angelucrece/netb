@@ -31,13 +31,23 @@ const logFormat = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf((info) => {
     const { timestamp, level, message, ...meta } = info;
-    let metaString = '';
-    
-    if (Object.keys(meta).length > 0) {
-      metaString = `\n${JSON.stringify(meta, null, 2)}`;
-    }
-    
-    return `${timestamp} [${level}]: ${message}${metaString}`;
+
+    const safeTimestamp =
+      typeof timestamp === 'string'
+        ? timestamp
+        : JSON.stringify(timestamp);
+
+    const safeMessage =
+      typeof message === 'string'
+        ? message
+        : JSON.stringify(message);
+
+    const metaString =
+      Object.keys(meta).length > 0
+        ? `\n${JSON.stringify(meta, null, 2)}`
+        : '';
+
+    return `${safeTimestamp} [${level}]: ${safeMessage}${metaString}`;
   })
 );
 

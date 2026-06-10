@@ -99,8 +99,8 @@ const runMigrations = async () => {
   if (!fs.existsSync(migrationsDir)) return;
 
   const files = fs.readdirSync(migrationsDir)
-    .filter((file) => file.endsWith('.sql'))
-    .sort();
+  .filter((file) => file.endsWith('.sql'))
+  .sort((a, b) => a.localeCompare(b));
 
   for (const file of files) {
     const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
@@ -132,7 +132,7 @@ const ensureDatabaseExists = async () => {
     if (res.rowCount === 0) {
       // Les identifiants de base de données ne peuvent pas être paramétrés en DDL PostgreSQL.
       // On valide strictement le nom avant interpolation (SonarCloud S3649).
-      if (!/^[a-zA-Z0-9_]+$/.test(dbName)) {
+      if (!/^\w+$/.test(dbName)) {
         throw new Error(`[DB] Nom de base de données invalide : "${dbName}". Seuls a-z, A-Z, 0-9 et _ sont autorisés.`);
       }
       await adminPool.query(`CREATE DATABASE "${dbName}"`); // NOSONAR: dbName validé par regex [a-zA-Z0-9_] ligne précédente

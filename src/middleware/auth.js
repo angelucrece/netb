@@ -34,8 +34,9 @@ const authenticate = asyncHandler(async (req, res, next) => {
   );
 
   const user = result.rows[0];
-  if (!user || !user.active) throw ApiError.unauthorized('Compte inactif ou introuvable');
-
+  if (!user?.active) {
+  throw ApiError.unauthorized('Compte inactif ou introuvable');
+}
   req.user = {
     id:      user.id,
     email:   user.email,
@@ -64,7 +65,9 @@ const authorize = (...roles) => (req, res, next) => {
       required: roles,
       url: req.originalUrl,
     });
-    throw ApiError.forbidden(`Rôle requis : ${roles.join(' ou ')}`); // eslint-disable-line
+    throw ApiError.forbidden(
+  `Rôle requis : ${roles.join(' ou ')}`
+); // eslint-disable-line security/detect-object-injection -- roles provient des arguments de la fonction authorize()
   }
   next();
 };
