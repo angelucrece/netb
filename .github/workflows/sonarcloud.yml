@@ -7,6 +7,7 @@
 #   TEST_DB_PASSWORD → mot de passe PostgreSQL de test
 #   TEST_JWT_SECRET  → secret JWT pour les tests
 # ──────────────────────────────────────────────────────────────
+
 name: SonarCloud Analysis
 
 on:
@@ -14,6 +15,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:   # ← permet de lancer manuellement depuis GitHub Actions
 
 jobs:
   sonarcloud:
