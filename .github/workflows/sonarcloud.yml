@@ -55,8 +55,8 @@ jobs:
           SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}    # À créer dans Settings > Secrets
         with:
           args: >
-            -Dsonar.projectKey=nethastock-backend
-            -Dsonar.organization=nethastock
+            -Dsonar.projectKey=lucrece
+            -Dsonar.organization=lucrece
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/test-connection*.js,**/test.js
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
