@@ -5,34 +5,45 @@ const paginate  = require('../../utils/paginate');
 const { logAction } = require('../../utils/auditLog');
 const db = require('../../config/database');
 const logger = require('../../config/logger');
+const { assertSiteAccess, assertTransferAccess, scopeFiltersToUser } = require('../../utils/accessControl');
+
+const actorFrom = (userOrId) => ({
+  user: typeof userOrId === 'object' && userOrId !== null ? userOrId : null,
+  userId: typeof userOrId === 'object' && userOrId !== null ? userOrId.id : userOrId,
+});
 
 class MovementService {
 
-  static async getAll(filters) {
+  static async getAll(filters, user) {
     const { page = 1, limit = 20, ...rest } = filters;
+    const scoped = user?.role ? scopeFiltersToUser(rest, user) : rest;
     const pg = paginate(page, limit, 0);
     const [rows, total] = await Promise.all([
-      MovementRepository.findAll({ ...rest, limit: pg.limit, offset: pg.offset }),
-      MovementRepository.count(rest),
+      MovementRepository.findAll({ ...scoped, limit: pg.limit, offset: pg.offset }),
+      MovementRepository.count(scoped),
     ]);
     return { movements: rows, pagination: paginate(page, limit, total) };
   }
 
-  static async getById(id) {
+  static async getById(id, user) {
     const m = await MovementRepository.findById(id);
     if (!m) throw ApiError.notFound('Mouvement introuvable');
+    if (user?.role) {
+      if (m.type === 'transfer') assertTransferAccess(user, m.site_id, m.destination_site_id);
+      else assertSiteAccess(user, m.site_id);
+    }
     return m;
   }
 
-  static async getPending(site_id) {
-    return await MovementRepository.findPending(site_id);
+  static async getPending(site_id, user) {
+    const scopedSiteId = user?.role ? scopeFiltersToUser({ site_id }, user).site_id : site_id;
+    return await MovementRepository.findPending(scopedSiteId);
   }
 
   // ── Entrée ──────────────────────────────────────────────
-  static async createEntry({ product_id, site_id, quantity, motif, supplier }, userId) {
-    // Demande d'entree stock :
-    // cree un mouvement en attente. Le stock ne change pas encore; il changera
-    // lorsque le mouvement sera valide par un role autorise.
+  static async createEntry({ product_id, site_id, quantity, motif, supplier }, userOrId) {
+    const { user, userId } = actorFrom(userOrId);
+    if (user?.role) assertSiteAccess(user, site_id);
     const movement = await MovementRepository.create({
       type: 'entry', product_id, site_id, quantity, user_id: userId, motif, supplier,
     });
@@ -41,10 +52,10 @@ class MovementService {
   }
 
   // ── Sortie ───────────────────────────────────────────────
-  static async createExit({ product_id, site_id, quantity, motif }, userId) {
-    // Demande de sortie stock :
-    // on verifie le stock disponible avant de creer la demande, mais le stock
-    // sera retire seulement lors de la validation du mouvement.
+  static async createExit({ product_id, site_id, quantity, motif }, userOrId) {
+    const { user, userId } = actorFrom(userOrId);
+    if (user?.role) assertSiteAccess(user, site_id);
+    // Vérifier stock disponible
     const stock = await StockRepository.findByProductAndSite(product_id, site_id);
     if (!stock || stock.quantity < quantity) {
       throw ApiError.badRequest('Stock insuffisant pour cette sortie');
@@ -57,11 +68,10 @@ class MovementService {
   }
 
   // ── Transfert inter-sites (atomique) ─────────────────────
-  static async createTransfer({ from_site_id, to_site_id, items, motif }, userId) {
-    // Transfert direct inter-sites :
-    // contrairement aux mouvements entree/sortie, ce transfert est applique
-    // immediatement et cree des mouvements deja valides.
+  static async createTransfer({ from_site_id, to_site_id, items, motif }, userOrId) {
+    const { user, userId } = actorFrom(userOrId);
     if (from_site_id === to_site_id) throw ApiError.badRequest('Sites identiques');
+    if (user?.role) assertTransferAccess(user, from_site_id, to_site_id);
 
     return await db.transaction(async (client) => {
       const movements = [];
@@ -110,8 +120,9 @@ class MovementService {
   }
 
   // ── Validation ───────────────────────────────────────────
-  static async validate(id, userId) {
-    const m = await this.getById(id);
+  static async validate(id, userOrId) {
+    const { user, userId } = actorFrom(userOrId);
+    const m = await this.getById(id, user);
     if (m.status !== 'pending') throw ApiError.badRequest('Mouvement non en attente');
 
     await db.transaction(async (client) => {
@@ -146,8 +157,9 @@ class MovementService {
   }
 
   // ── Rejet ────────────────────────────────────────────────
-  static async reject(id, rejection_reason, userId) {
-    const m = await this.getById(id);
+  static async reject(id, rejection_reason, userOrId) {
+    const { user, userId } = actorFrom(userOrId);
+    const m = await this.getById(id, user);
     if (m.status !== 'pending') throw ApiError.badRequest('Mouvement non en attente');
     await MovementRepository.updateStatus(id, 'rejected', userId, rejection_reason);
     await logAction({ userId, action: 'REJECT_MOVEMENT', entityType: 'movement', entityId: id });

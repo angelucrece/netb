@@ -1,6 +1,6 @@
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
-const crypto   = require('crypto');
+const crypto   = require('node:crypto');
 const db       = require('../../config/database');
 const ApiError = require('../../utils/ApiError');
 const logger   = require('../../config/logger');

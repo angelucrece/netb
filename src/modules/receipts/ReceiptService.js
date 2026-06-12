@@ -208,7 +208,7 @@ class ReceiptService {
     doc.fontSize(10).text(title, x, y, { width: 200 });
 
     if (signature && typeof signature === 'string' && signature.startsWith('data:image/')) {
-      const match = signature.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+      const match = /^data:image\/(png|jpeg|jpg);base64,(.+)$/.exec(signature);
       if (match) {
         try {
           doc.image(Buffer.from(match[2], 'base64'), x, y + 16, { fit: [180, 38] });

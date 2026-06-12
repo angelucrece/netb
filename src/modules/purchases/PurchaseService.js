@@ -3,65 +3,72 @@ const ApiError = require('../../utils/ApiError');
 const paginate = require('../../utils/paginate');
 const { logAction } = require('../../utils/auditLog');
 const db = require('../../config/database');
+const {
+  assertSiteAccess,
+  scopeFiltersToUser,
+  scopePayloadToUser,
+} = require('../../utils/accessControl');
+
+const actorFrom = (userOrId) => ({
+  user: typeof userOrId === 'object' && userOrId !== null ? userOrId : null,
+  userId: typeof userOrId === 'object' && userOrId !== null ? userOrId.id : userOrId,
+});
 
 class PurchaseService {
-  static async getAll(filters) {
+  static async getAll(filters, user) {
     const { page = 1, limit = 20, ...rest } = filters;
+    const scoped = user?.role ? scopeFiltersToUser(rest, user) : rest;
     const pg = paginate(page, limit, 0);
     const [rows, total] = await Promise.all([
-      PurchaseRepository.findAll({ ...rest, limit: pg.limit, offset: pg.offset }),
-      PurchaseRepository.count(rest),
+      PurchaseRepository.findAll({ ...scoped, limit: pg.limit, offset: pg.offset }),
+      PurchaseRepository.count(scoped),
     ]);
     return { purchases: rows, pagination: paginate(page, limit, total) };
   }
 
-  static async getById(id) {
+  static async getById(id, user) {
     const order = await PurchaseRepository.findById(id);
     if (!order) throw ApiError.notFound('Commande achat introuvable');
+    if (user?.role) assertSiteAccess(user, order.site_id);
     return order;
   }
 
-  static async create(data, userId, ip) {
-    // Bon de commande fournisseur :
-    // ce flux sert a commander des produits chez un fournisseur. Il ne modifie
-    // pas encore le stock. Le stock sera augmente uniquement au moment de la
-    // reception effective de la marchandise.
+  static async create(data, userOrId, ip) {
+    const { user, userId } = actorFrom(userOrId);
+    const scopedData = user?.role ? scopePayloadToUser(data, user) : data;
     const id = await db.transaction(async (client) => {
-      const orderId = await PurchaseRepository.create({ ...data, created_by: userId }, client);
-      await PurchaseRepository.addItems(orderId, data.items, client);
+      const orderId = await PurchaseRepository.create({ ...scopedData, created_by: userId }, client);
+      await PurchaseRepository.addItems(orderId, scopedData.items, client);
       await PurchaseRepository.refreshTotal(orderId, client);
       return orderId;
     });
 
-    await logAction({ userId, action: 'CREATE_PURCHASE_ORDER', entityType: 'purchase_order', entityId: id, newValue: data, ip });
-    return this.getById(id);
+    await logAction({ userId, action: 'CREATE_PURCHASE_ORDER', entityType: 'purchase_order', entityId: id, newValue: scopedData, ip });
+    return this.getById(id, user);
   }
 
-  static async markOrdered(id, userId, ip) {
-    const order = await this.getById(id);
+  static async markOrdered(id, userOrId, ip) {
+    const { user, userId } = actorFrom(userOrId);
+    const order = await this.getById(id, user);
     if (order.status !== 'draft') throw ApiError.badRequest('Seules les commandes brouillon peuvent etre envoyees');
 
-    // Passage de brouillon a commande envoyee au fournisseur.
-    // A ce stade, aucun mouvement de stock n'est cree.
     await PurchaseRepository.updateStatus(id, 'ordered');
     await logAction({ userId, action: 'ORDER_PURCHASE_ORDER', entityType: 'purchase_order', entityId: id, ip });
-    return this.getById(id);
+    return this.getById(id, user);
   }
 
-  static async cancel(id, reason, userId, ip) {
-    const order = await this.getById(id);
+  static async cancel(id, reason, userOrId, ip) {
+    const { user, userId } = actorFrom(userOrId);
+    const order = await this.getById(id, user);
     if (order.status === 'received') throw ApiError.badRequest('Commande deja receptionnee');
     await PurchaseRepository.updateStatus(id, 'cancelled');
     await logAction({ userId, action: 'CANCEL_PURCHASE_ORDER', entityType: 'purchase_order', entityId: id, newValue: { reason }, ip });
-    return this.getById(id);
+    return this.getById(id, user);
   }
 
-  static async receive(id, payload, userId, ip) {
-    // Bon de reception :
-    // ce flux correspond a l'arrivee physique des produits depuis le fournisseur.
-    // Il augmente le stock, cree un mouvement d'entree valide, puis cree un
-    // document stock de type "reception" pour garder une trace administrative.
-    const order = await this.getById(id);
+  static async receive(id, payload, userOrId, ip) {
+    const { user, userId } = actorFrom(userOrId);
+    const order = await this.getById(id, user);
     if (order.status === 'cancelled') throw ApiError.badRequest('Commande annulee');
     if (order.status === 'received') throw ApiError.badRequest('Commande deja receptionnee');
 
@@ -164,7 +171,7 @@ class PurchaseService {
     });
 
     await logAction({ userId, action: 'RECEIVE_PURCHASE_ORDER', entityType: 'purchase_order', entityId: id, newValue: payload, ip });
-    return this.getById(id);
+    return this.getById(id, user);
   }
 }
 

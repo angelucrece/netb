@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const ApiError = require('../../../utils/ApiError');
 
 class MtnMomoProvider {

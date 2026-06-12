@@ -10,7 +10,9 @@
     "test": "jest",
     "start": "node  src/core/server.js",
     "dev": "nodemon src/core/server.js",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "reset:passwords": "node scripts/reset-test-passwords.js",
+    "seed": "node scripts/run-seed.js"
   },
   "jest": {
     "testMatch": [

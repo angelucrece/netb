@@ -1,0 +1,750 @@
+src/db/migrations/20260517_commercial_flows.sql
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L29
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L30
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 5 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L52
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L53
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L190
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+src/db/schema.sql
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L14
+4min effort
+1 day ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L17
+4min effort
+1 day ago
+
+Code Smell
+
+Critical
+src/modules/auth/AuthService.js
+Prefer `node:crypto` over `crypto`.
+
+Consistency
+Maintainability
+
+
+2
+Medium
+convention
+import
+...
+Open
+Not assigned
+L3
+5min effort
+1 month ago
+
+Code Smell
+
+Minor
+src/modules/clients/ClientRepository.js
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L9
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L42
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+src/modules/payments/providers/MtnMomoProvider.js
+Prefer `node:crypto` over `crypto`.
+
+Consistency
+Maintainability
+
+
+2
+Medium
+convention
+import
+...
+Open
+angelucrece
+angelucrece
+L1
+5min effort
+20 days ago
+
+Code Smell
+
+Minor
+Extract this nested ternary operation into an independent statement.
+
+Intentionality
+Maintainability
+
+
+2
+Medium
+confusing
+Open
+angelucrece
+angelucrece
+L87
+5min effort
+20 days ago
+
+Code Smell
+
+Major
+src/modules/payments/providers/StripeProvider.js
+Extract this nested ternary operation into an independent statement.
+
+Intentionality
+Maintainability
+
+
+2
+Medium
+confusing
+Open
+angelucrece
+angelucrece
+L61
+5min effort
+20 days ago
+
+Code Smell
+
+Major
+src/modules/receipts/ReceiptService.js
+Default parameters should be last.
+
+Adaptability
+Maintainability
+
+
+2
+Medium
+es2015
+Open
+angelucrece
+angelucrece
+L52
+20min effort
+20 days ago
+
+Code Smell
+
+Major
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L178
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Use the "RegExp.exec()" method instead.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+regex
+type-dependent
+Open
+angelucrece
+angelucrece
+L211
+5min effort
+20 days ago
+
+Code Smell
+
+Minor
+Handle this exception or don't catch it at all.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+cwe
+error-handling
+...
+Open
+angelucrece
+angelucrece
+L215
+1h effort
+20 days ago
+
+Code Smell
+
+Minor
+src/modules/suppliers/SupplierRepository.js
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L10
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L38
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+src/db/migrations/20260517_commercial_flows.sql
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L29
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L30
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 5 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L52
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L53
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L190
+4min effort
+20 days ago
+
+Code Smell
+
+Critical
+src/db/schema.sql
+Define a constant instead of duplicating this literal 4 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L14
+4min effort
+1 day ago
+
+Code Smell
+
+Critical
+Define a constant instead of duplicating this literal 3 times.
+
+Adaptability
+Maintainability
+
+
+4
+High
+design
+Open
+angelucrece
+angelucrece
+L17
+4min effort
+1 day ago
+
+Code Smell
+
+Critical
+src/modules/auth/AuthService.js
+Prefer `node:crypto` over `crypto`.
+
+Consistency
+Maintainability
+
+
+2
+Medium
+convention
+import
+...
+Open
+Not assigned
+L3
+5min effort
+1 month ago
+
+Code Smell
+
+Minor
+src/modules/clients/ClientRepository.js
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L9
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L42
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+src/modules/payments/providers/MtnMomoProvider.js
+Prefer `node:crypto` over `crypto`.
+
+Consistency
+Maintainability
+
+
+2
+Medium
+convention
+import
+...
+Open
+angelucrece
+angelucrece
+L1
+5min effort
+20 days ago
+
+Code Smell
+
+Minor
+Extract this nested ternary operation into an independent statement.
+
+Intentionality
+Maintainability
+
+
+2
+Medium
+confusing
+Open
+angelucrece
+angelucrece
+L87
+5min effort
+20 days ago
+
+Code Smell
+
+Major
+src/modules/payments/providers/StripeProvider.js
+Extract this nested ternary operation into an independent statement.
+
+Intentionality
+Maintainability
+
+
+2
+Medium
+confusing
+Open
+angelucrece
+angelucrece
+L61
+5min effort
+20 days ago
+
+Code Smell
+
+Major
+src/modules/receipts/ReceiptService.js
+Default parameters should be last.
+
+Adaptability
+Maintainability
+
+
+2
+Medium
+es2015
+Open
+angelucrece
+angelucrece
+L52
+20min effort
+20 days ago
+
+Code Smell
+
+Major
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L178
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Use the "RegExp.exec()" method instead.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+regex
+type-dependent
+Open
+angelucrece
+angelucrece
+L211
+5min effort
+20 days ago
+
+Code Smell
+
+Minor
+Handle this exception or don't catch it at all.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+cwe
+error-handling
+...
+Open
+angelucrece
+angelucrece
+L215
+1h effort
+20 days ago
+
+Code Smell
+
+Minor
+src/modules/suppliers/SupplierRepository.js
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L10
+2min effort
+20 days ago
+
+Code Smell
+
+Minor
+Unexpected negated condition.
+
+Intentionality
+Maintainability
+
+
+3
+Low
+readability
+Open
+angelucrece
+angelucrece
+L38
+2min effort
+20 days ago
+
+Code Smell
+
+Minor

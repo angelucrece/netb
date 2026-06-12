@@ -3,7 +3,7 @@
 -- Ajout des rôles commerciaux et comptes de test associés
 -- ============================================================
 -- SÉCURITÉ : aucun hash de mot de passe dans ce fichier.
--- Les comptes sont créés inactifs (active = FALSE, password_hash = NULL).
+-- Les comptes sont créés inactifs (active = FALSE) avec un hash placeholder.
 -- Activer via : SEED_PASSWORD=xxx node scripts/reset-test-passwords.js
 -- ============================================================
 
@@ -31,11 +31,11 @@ BEGIN
   SELECT id INTO v_delivery_role_id   FROM roles WHERE name = 'delivery_agent';
   SELECT id INTO v_site_id            FROM sites WHERE name = 'Siège Principal' LIMIT 1;
 
-  -- password_hash = NULL : comptes désactivés jusqu'à reset-test-passwords.js
+  -- hash placeholder : compte inactif, ne permet aucune connexion.
   INSERT INTO users (email, password_hash, first_name, last_name, role_id, site_id, active) VALUES
-    ('commercial@nethastock.com',  NULL, 'Paul',   'Commercial', v_commercial_role_id, v_site_id, FALSE),
-    ('cashier@nethastock.com',     NULL, 'Sophie', 'Caissière',  v_cashier_role_id,    v_site_id, FALSE),
-    ('buyer@nethastock.com',       NULL, 'Marc',   'Acheteur',   v_buyer_role_id,      v_site_id, FALSE),
-    ('delivery@nethastock.com',    NULL, 'Pierre', 'Livreur',    v_delivery_role_id,   v_site_id, FALSE)
+    ('commercial@nethastock.com',  '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Paul',   'Commercial', v_commercial_role_id, v_site_id, FALSE),
+    ('cashier@nethastock.com',     '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Sophie', 'Caissière',  v_cashier_role_id,    v_site_id, FALSE),
+    ('buyer@nethastock.com',       '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Marc',   'Acheteur',   v_buyer_role_id,      v_site_id, FALSE),
+    ('delivery@nethastock.com',    '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Pierre', 'Livreur',    v_delivery_role_id,   v_site_id, FALSE)
   ON CONFLICT (email) DO NOTHING;
 END $$;

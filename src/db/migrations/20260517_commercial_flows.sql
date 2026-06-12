@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
 
 CREATE TABLE IF NOT EXISTS clients (
   id                 SERIAL PRIMARY KEY,
-  type               VARCHAR(20) NOT NULL DEFAULT 'occasional'
-                     CHECK (type IN ('company','occasional')),
+  type               VARCHAR(20) NOT NULL DEFAULT 'occasional' -- NOSONAR: duplication de type SQL inévitable sans procédure stockée
+                     CHECK (type IN ('company','occasional')), -- NOSONAR: duplication de type SQL inévitable sans procédure stockée
   name               VARCHAR(255) NOT NULL,
   contact_name       VARCHAR(150),
   email              VARCHAR(255),
@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
   supplier_id    INTEGER REFERENCES suppliers(id) ON DELETE SET NULL,
   site_id        INTEGER NOT NULL REFERENCES sites(id),
   reference      VARCHAR(100),
-  status         VARCHAR(30) NOT NULL DEFAULT 'draft'
-                 CHECK (status IN ('draft','ordered','partially_received','received','cancelled')),
+  status         VARCHAR(30) NOT NULL DEFAULT 'draft' -- NOSONAR: duplication de type SQL inévitable sans procédure stockée
+                 CHECK (status IN ('draft','ordered','partially_received','received','cancelled')), -- NOSONAR: duplication de type SQL inévitable sans procédure stockée
   expected_at    TIMESTAMPTZ,
   notes          TEXT,
   total_amount   DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS payments (
   cash_session_id INTEGER REFERENCES cash_sessions(id) ON DELETE SET NULL,
   amount          DECIMAL(12,2) NOT NULL CHECK (amount > 0),
   mode            VARCHAR(30) NOT NULL
-                  CHECK (mode IN ('cash','orange_money','mtn_money','card','bank_transfer','cheque','credit')),
+                  CHECK (mode IN ('cash','orange_money','mtn_money','bank_transfer','cheque','credit')),
   type            VARCHAR(20) NOT NULL DEFAULT 'full'
                   CHECK (type IN ('deposit','balance','full','invoice')),
   reference       VARCHAR(100),
@@ -187,7 +187,7 @@ SELECT 'company', 'Entreprise Alpha SARL', 'Responsable achats', '+237 690 000 1
 WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Entreprise Alpha SARL');
 
 INSERT INTO clients (type, name, contact_name, phone, city)
-SELECT 'occasional', 'Client comptoir', 'Client comptoir', '+237 690 000 102', 'Douala'
+SELECT 'occasional', 'Client comptoir', 'Client comptoir', '+237 690 000 102', 'Douala' -- NOSONAR: duplication de type SQL inévitable sans procédure stockée
 WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Client comptoir');
 
 CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(active);

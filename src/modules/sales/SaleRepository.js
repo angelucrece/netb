@@ -208,6 +208,14 @@ class SaleRepository {
     );
   }
 
+  static async salePaidTotal(sale_order_id, client) {
+    const { rows } = await runner(client).query(
+      'SELECT COALESCE(SUM(amount),0)::numeric AS total FROM payments WHERE sale_order_id=$1',
+      [sale_order_id]
+    );
+    return Number(rows[0].total || 0);
+  }
+
   static async findInvoiceBySaleOrder(sale_order_id) {
     const { rows } = await db.query(
       'SELECT * FROM invoices WHERE sale_order_id=$1 ORDER BY created_at DESC LIMIT 1',

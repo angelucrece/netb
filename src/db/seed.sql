@@ -1,6 +1,3 @@
-
-
-
 -- ============================================================
 -- NethaStock – Données initiales (seed)
 -- ============================================================
@@ -54,13 +51,13 @@ BEGIN
   -- password_hash = NULL : les comptes sont désactivés jusqu'à
   -- l'exécution de reset-test-passwords.js en local.
   INSERT INTO users (email, password_hash, first_name, last_name, role_id, site_id, active) VALUES
-    ('naelle@nethastock.com',     NULL, 'Naelle',  'Admin',      v_admin_role_id,      v_site_id, FALSE),
-    ('admin@nethastock.com',      NULL, 'Super',   'Admin',      v_admin_role_id,      v_site_id, FALSE),
-    ('operator@nethastock.com',   NULL, 'Op',      'Stock',      v_operator_role_id,   v_site_id, FALSE),
-    ('controller@nethastock.com', NULL, 'Jean',    'Contrôleur', v_controller_role_id, v_site_id, FALSE),
-    ('manager@nethastock.com',    NULL, 'Marie',   'Manager',    v_manager_role_id,    v_site_id, FALSE),
-    ('viewer@nethastock.com',     NULL, 'Paul',    'Viewer',     v_viewer_role_id,     v_site_id, FALSE),
-    ('decision@nethastock.com',   NULL, 'Alice',   'Décideur',   v_decision_role_id,   v_site_id, FALSE),
-    ('accountant@nethastock.com', NULL, 'Bob',     'Comptable',  v_accountant_role_id, v_site_id, FALSE)
+    ('naelle@nethastock.com',     '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Naelle',  'Admin',      v_admin_role_id,      v_site_id, FALSE),
+    ('admin@nethastock.com',      '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Super',   'Admin',      v_admin_role_id,      v_site_id, FALSE),
+    ('operator@nethastock.com',   '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Op',      'Stock',      v_operator_role_id,   v_site_id, FALSE),
+    ('controller@nethastock.com', '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Jean',    'Contrôleur', v_controller_role_id, v_site_id, FALSE),
+    ('manager@nethastock.com',    '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Marie',   'Manager',    v_manager_role_id,    v_site_id, FALSE),
+    ('viewer@nethastock.com',     '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Paul',    'Viewer',     v_viewer_role_id,     v_site_id, FALSE),
+    ('decision@nethastock.com',   '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Alice',   'Décideur',   v_decision_role_id,   v_site_id, FALSE),
+    ('accountant@nethastock.com', '$2b$12$PLACEHOLDER_COMPTE_DESACTIVE_CHANGER_AVEC_RESET_SCRIPT', 'Bob',     'Comptable',  v_accountant_role_id, v_site_id, FALSE)
   ON CONFLICT (email) DO NOTHING;
 END $$;

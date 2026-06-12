@@ -8,7 +8,7 @@ class ClientRepository {
 
     if (active !== undefined) {
       conds.push(`active = $${i++}`);
-      vals.push(active === true || active === 'true');
+      vals.push(String(active) === 'true'); // conversion explicite string/boolean
     } else {
       conds.push('active = true');
     }
@@ -41,7 +41,7 @@ class ClientRepository {
 
     if (active !== undefined) {
       conds.push(`active = $${i++}`);
-      vals.push(active === true || active === 'true');
+      vals.push(String(active) === 'true'); // conversion explicite string/boolean
     } else {
       conds.push('active = true');
     }

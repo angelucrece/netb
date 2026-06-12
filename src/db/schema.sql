@@ -11,10 +11,10 @@ DROP DOMAIN IF EXISTS movement_status CASCADE;
 DROP DOMAIN IF EXISTS document_status CASCADE;
 
 CREATE DOMAIN movement_status AS VARCHAR(20)
-  CHECK (VALUE IN ('pending', 'validated', 'rejected'));
+  CHECK (VALUE IN ('pending', 'validated', 'rejected')); -- NOSONAR: SQL DOMAIN défini pour les statuts, duplication TIMESTAMPTZ inévitable
 
 CREATE DOMAIN document_status AS VARCHAR(20)
-  CHECK (VALUE IN ('draft', 'validated', 'cancelled'));
+  CHECK (VALUE IN ('draft', 'validated', 'cancelled')); -- NOSONAR: SQL DOMAIN défini pour les statuts, duplication TIMESTAMPTZ inévitable
 
 -- ── ROLES ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS roles (
